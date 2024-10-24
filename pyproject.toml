@@ -9,19 +9,17 @@ description = 'A modern reimplementation of the Pantheon of Congestion Control'
 readme = "README.md"
 requires-python = ">=3.8"
 keywords = []
-authors = [
-  { name = "Shinwoo Kim", email = "shinwookim@proton.me" },
-]
+authors = [{ name = "Shinwoo Kim", email = "shinwookim@proton.me" }]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
+    "Development Status :: 2 - Pre-Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = []
 
@@ -32,13 +30,13 @@ Source = "https://github.com/shinwookim/NewPantheon"
 
 [project.optional-dependencies]
 dev = [
-  "black",
-  "coverage",
-  "ruff",
-  "mypy",
-  "pytest",
-  "pytest-cov",
-  "pre-commit",
+    "black",
+    "coverage",
+    "ruff",
+    "mypy",
+    "pytest",
+    "pytest-cov",
+    "pre-commit",
 ]
 
 [tool.hatch.version]
@@ -48,9 +46,7 @@ path = "src/newpantheon/__about__.py"
 features = ["dev"]
 
 [tool.hatch.envs.types]
-extra-dependencies = [
-  "mypy>=1.0.0",
-]
+extra-dependencies = ["mypy>=1.0.0"]
 [tool.hatch.envs.types.scripts]
 check = "mypy --install-types --non-interactive {args:src/newpantheon tests}"
 
@@ -58,17 +54,11 @@ check = "mypy --install-types --non-interactive {args:src/newpantheon tests}"
 source_pkgs = ["newpantheon", "tests"]
 branch = true
 parallel = true
-omit = [
-  "src/newpantheon/__about__.py",
-]
+omit = ["src/newpantheon/__about__.py"]
 
 [tool.coverage.paths]
 newpantheon = ["src/newpantheon", "*/newpantheon/src/newpantheon"]
 tests = ["tests", "*/newpantheon/tests"]
 
 [tool.coverage.report]
-exclude_lines = [
-  "no cov",
-  "if __name__ == .__main__.:",
-  "if TYPE_CHECKING:",
-]
+exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]

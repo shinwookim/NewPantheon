@@ -1,0 +1,69 @@
+schemes:
+  cubic:
+    name: TCP Cubic
+    color: black
+    marker: '*'
+  vegas:
+    name: TCP Vegas
+    color: silver
+    marker: 'h'
+  bbr:
+    name: TCP BBR
+    color: gold
+    marker: '^'
+  ledbat:
+    name: LEDBAT
+    color: green
+    marker: '<'
+  pcc:
+    name: PCC-Allegro
+    color: cyan
+    marker: '>'
+  verus:
+    name: Verus
+    color: skyblue
+    marker: 'H'
+  sprout:
+    name: Sprout
+    color: orange
+    marker: 'p'
+  quic:
+    name: QUIC Cubic
+    color: magenta
+    marker: '8'
+  scream:
+    name: SCReAM
+    color: pink
+    marker: '1'
+  webrtc:
+    name: WebRTC media
+    color: brown
+    marker: 'v'
+  copa:
+    name: Copa
+    color: red
+    marker: 'o'
+  taova:
+    name: TaoVA-100x
+    color: gray
+    marker: 'd'
+  vivace:
+    name: PCC-Vivace
+    color: blue
+    marker: '<'
+  pcc_experimental:
+    name: PCC-Expr
+    color: olive
+    marker: '<'
+  fillp:
+    name: FillP
+    color: violet
+    marker: '+'
+  indigo:
+    name: Indigo
+    color: indigo
+    marker: 'D'
+  fillp_sheep:
+    name: FillP-Sheep
+    color: violet
+    marker: 'D'

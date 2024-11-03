@@ -4,7 +4,7 @@ from os import path
 
 import arg_parser
 import context
-from helpers.subprocess_wrappers import check_call
+from ..helpers.subprocess_wrappers import check_call
 
 
 def main():

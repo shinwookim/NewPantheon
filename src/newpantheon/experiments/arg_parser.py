@@ -4,7 +4,7 @@ import yaml
 import argparse
 
 import context
-from helpers import utils
+from ..helpers import utils
 
 
 def verify_schemes(schemes):

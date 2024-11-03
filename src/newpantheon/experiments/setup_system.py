@@ -4,8 +4,8 @@ import sys
 import arg_parser
 
 import context
-from helpers import kernel_ctl
-from helpers.subprocess_wrappers import check_call
+from ..helpers import kernel_ctl
+from ..helpers.subprocess_wrappers import check_call
 
 
 def sysctl(metric, value):

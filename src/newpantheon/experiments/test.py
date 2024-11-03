@@ -13,8 +13,8 @@ from collections import namedtuple
 
 import arg_parser
 import context
-from helpers import utils, kernel_ctl
-from helpers.subprocess_wrappers import Popen, call
+from ..helpers import utils, kernel_ctl
+from ..helpers.subprocess_wrappers import Popen, call
 
 
 Flow = namedtuple('Flow', ['cc', # replace self.cc
@@ -149,7 +149,7 @@ class Test(object):
         if self.mode == 'remote':
             remote_tmp = self.r['tmp_dir']
 
-        for tun_id in xrange(1, self.flows + 1):
+        for tun_id in range(1, self.flows + 1):
             uid = uuid.uuid4()
 
             datalink_ingress_logname = ('%s_flow%s_uid%s.log.ingress' %
@@ -496,7 +496,7 @@ class Test(object):
         self.test_start_time = utils.utc_time()
 
         # start each flow self.interval seconds after the previous one
-        for i in xrange(len(second_cmds)):
+        for i in range(len(second_cmds)):
             if i != 0:
                 time.sleep(self.interval)
             second_cmd = second_cmds[i]
@@ -542,7 +542,7 @@ class Test(object):
 
         # run every flow
         second_cmds = []
-        for tun_id in xrange(1, self.flows + 1):
+        for tun_id in range(1, self.flows + 1):
             # run tunnel server for tunnel tun_id
             cmd_to_run_tc = self.run_tunnel_server(tun_id, ts_manager)
 
@@ -635,7 +635,7 @@ class Test(object):
         merge_tunnel_logs = path.join(context.src_dir, 'experiments',
                                       'merge_tunnel_logs.py')
 
-        for tun_id in xrange(1, self.flows + 1):
+        for tun_id in range(1, self.flows + 1):
             if self.mode == 'remote':
                 self.download_tunnel_logs(tun_id)
 
@@ -775,7 +775,7 @@ def run_tests(args):
     utils.save_test_metadata(meta, metadata_path)
 
     # run tests
-    for run_id in xrange(args.start_run_id,
+    for run_id in range(args.start_run_id,
                          args.start_run_id + args.run_times):
         if not hasattr(args, 'test_config') or args.test_config is None:
             for cc in cc_schemes:

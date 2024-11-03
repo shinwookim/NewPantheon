@@ -8,7 +8,7 @@ from subprocess import call, check_call, check_output, Popen
 
 import arg_parser
 import context
-from helpers import utils
+from ..helpers import utils
 
 
 def xvfb_in_use(display):

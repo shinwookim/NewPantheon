@@ -4,7 +4,7 @@ from subprocess import check_call
 
 import arg_parser
 import context
-from helpers import kernel_ctl
+from ..helpers import kernel_ctl
 
 
 def setup_bbr():
@@ -22,7 +22,7 @@ def main():
     args = arg_parser.receiver_first()
 
     if args.option == 'deps':
-        print 'iperf'
+        print('iperf')
         return
 
     if args.option == 'setup_after_reboot':

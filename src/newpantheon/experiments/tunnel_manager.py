@@ -7,7 +7,7 @@ import signal
 from subprocess import Popen, PIPE
 
 import context
-from helpers import utils
+from ..helpers import utils
 
 
 def main():
@@ -55,7 +55,7 @@ def main():
                 cmd_to_run = path.expandvars(cmd_to_run).split()
 
                 # expand home directory
-                for i in xrange(len(cmd_to_run)):
+                for i in range(len(cmd_to_run)):
                     if ('--ingress-log' in cmd_to_run[i] or
                         '--egress-log' in cmd_to_run[i]):
                         t = cmd_to_run[i].split('=')

@@ -10,7 +10,7 @@ from subprocess import check_call, call
 
 import arg_parser
 import context
-from helpers import utils
+from ..helpers import utils
 
 
 def generate_html(output_dir, size):
@@ -41,7 +41,7 @@ def generate_html(output_dir, size):
     block_size = 100 * 1024 * 1024
     block = 'x' * block_size
     num_blocks = int(size) / block_size + 1
-    for _ in xrange(num_blocks):
+    for _ in range(num_blocks):
         html.write(block + '\n')
 
     html.write(foot_text)
@@ -91,7 +91,7 @@ def main():
     utils.make_sure_dir_exists(html_dir)
 
     if args.option == 'deps':
-        print 'libnss3-tools libgconf-2-4'
+        print('libnss3-tools libgconf-2-4')
         return
 
     if args.option == 'setup':

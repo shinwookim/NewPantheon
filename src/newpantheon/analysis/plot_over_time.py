@@ -10,7 +10,7 @@ import matplotlib.ticker as ticker
 
 import arg_parser
 import context
-from ..helpers import utils
+from newpantheon.helpers import utils
 
 
 class PlotThroughputTime(object):

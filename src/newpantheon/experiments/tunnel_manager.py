@@ -7,7 +7,7 @@ import signal
 from subprocess import Popen, PIPE
 
 import context
-from ..helpers import utils
+from newpantheon.helpers import utils
 
 
 def main():

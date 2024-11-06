@@ -4,7 +4,7 @@ from subprocess import check_call
 
 import arg_parser
 import context
-from ..helpers import kernel_ctl
+from newpantheon.helpers import kernel_ctl
 
 
 def setup_bbr():

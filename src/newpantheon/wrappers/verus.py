@@ -5,7 +5,7 @@ from subprocess import check_call
 
 import arg_parser
 import context
-from ..helpers import utils
+from newpantheon.helpers import utils
 
 
 def main():

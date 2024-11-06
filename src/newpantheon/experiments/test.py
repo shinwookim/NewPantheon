@@ -13,8 +13,8 @@ from collections import namedtuple
 
 import arg_parser
 import context
-from ..helpers import utils, kernel_ctl
-from ..helpers.subprocess_wrappers import Popen, call
+from newpantheon.helpers import utils, kernel_ctl
+from newpantheon.helpers.subprocess_wrappers import Popen, call
 
 
 Flow = namedtuple('Flow', ['cc', # replace self.cc

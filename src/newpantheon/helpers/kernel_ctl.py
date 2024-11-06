@@ -3,14 +3,14 @@ import sys
 from subprocess_wrappers import call, check_output, check_call
 
 
-def load_kernel_module(module):
-    if call('sudo modprobe ' + module, shell=True) != 0:
-        sys.exit('%s kernel module is not available' % module)
+def load_kernel_module(module: str) -> None:
+    """Load a kernel module if it is available."""
+    if call(f"sudo modprobe {module}", shell=True) != 0:
+        sys.exit(f"{module} kernel module is not available")
 
 
 def enable_congestion_control(cc):
-    cc_list = check_output('sysctl net.ipv4.tcp_allowed_congestion_control',
-                           shell=True)
+    cc_list = check_output('sysctl net.ipv4.tcp_allowed_congestion_control', shell=True)
     cc_list = cc_list.split('=')[-1].split()
 
     # return if cc is already in the allowed congestion control list
@@ -18,8 +18,7 @@ def enable_congestion_control(cc):
         return
 
     cc_list.append(cc)
-    check_call('sudo sysctl -w net.ipv4.tcp_allowed_congestion_control="%s"'
-               % ' '.join(cc_list), shell=True)
+    check_call('sudo sysctl -w net.ipv4.tcp_allowed_congestion_control="%s"' % ' '.join(cc_list), shell=True)
 
 
 def check_qdisc(qdisc):

@@ -5,8 +5,8 @@ import sys
 
 import arg_parser
 import context
-from ..helpers import utils
-from ..helpers.subprocess_wrappers import call, check_call, check_output
+from newpantheon.helpers import utils
+from newpantheon.helpers.subprocess_wrappers import call, check_call, check_output
 
 
 def install_deps(cc_src):

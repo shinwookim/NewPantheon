@@ -9,8 +9,8 @@ import numpy as np
 
 import arg_parser
 import context
-from ..helpers import utils
-from ..helpers.subprocess_wrappers import check_call, check_output
+from newpantheon.helpers import utils
+from newpantheon.helpers.subprocess_wrappers import check_call, check_output
 
 
 class Report(object):

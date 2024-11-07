@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
+import os, sys
 
-import os
-import signal
+from signal import signal, SIGINT, SIGTERM
 import sys
-from os import path
+from os import path, setsid
 from subprocess import Popen, PIPE
 
-from newpantheon.common import utils
+SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+print(SCRIPT_DIR)
 
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+from newpantheon.common import utils
 
 def start():
     prompt = None
@@ -20,8 +23,8 @@ def start():
 
         sys.exit('tunnel_manager: caught signal %s and cleaned up\n' % signum)
 
-    signal.signal(signal.SIGINT, stop_signal_handler)
-    signal.signal(signal.SIGTERM, stop_signal_handler)
+    signal(SIGINT, stop_signal_handler)
+    signal(SIGTERM, stop_signal_handler)
 
     sys.stdout.write('tunnel manager is running\n')
     sys.stdout.flush()
@@ -38,7 +41,9 @@ def start():
         commands = input_command.split()
 
         # Manage I/O of multiple tunnels
-        if commands[0] == "tunnel":
+        if len(commands) == 0:
+            continue
+        elif commands[0] == "tunnel":
             if len(commands) < 3:
                 print("error: not enough arguments\n\tusage: ID CMD...")
                 continue
@@ -57,7 +62,7 @@ def start():
                 commands_to_run = [path.expanduser(part) if "--ingress-log" in part or "--egress-log" in part else part
                                    for part in commands_to_run]
 
-                procs[tun_id] = Popen(commands_to_run, stdin=PIPE, stdout=PIPE, preexec_fn=os.setsid)
+                procs[tun_id] = Popen(commands_to_run, stdin=PIPE, stdout=PIPE, preexec_fn=setsid)
             elif commands[2] == 'python':  # Run Python scripts inside tunnel
                 if tun_id not in procs:
                     print("error: run tunnel client or server first", file=sys.stderr)

@@ -1,0 +1,1 @@
+# 'mm-tunnelclient' '--ingress-log=/home/shinwoo/NewPantheon/src/tmp/cubic_acklink_run1_flow1_uidb8cd435b-78ce-473d-8b86-d9a8e343bcc7.log.ingress' '--egress-log=/home/shinwoo/NewPantheon/src/tmp/cubic_datalink_run1_flow1_uidb8cd435b-78ce-473d-8b86-d9a8e343bcc7.log.egress' '100.64.0.1' '52350' '100.64.0.4' '100.64.0.3' egress: 1730956879221.567

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-import experiments
+from . import experiments
 
 def parse_app_args(args=None):
 
-    parser = argparse.ArgumentParser(description="Program for analysis and experiments")
+    parser = argparse.ArgumentParser(description="Program for analysis and experiments using Pantheon")
 
     # Define top-level subcommands
     subparsers = parser.add_subparsers(dest='command', required=True, help="Main commands")

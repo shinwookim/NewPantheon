@@ -1,28 +1,26 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+from typing import List
 
-from subprocess import check_call
-
-import arg_parser
+from cc_wraper import RunFirst, CCScheme, run_scheme
 
 
-def main():
-    args = arg_parser.receiver_first()
+class CC(CCScheme):
+    def get_deps(self) -> str:
+        return "iperf"
 
-    if args.option == 'deps':
-        print('iperf')
-        return
+    def setup_first_time(self):
+        pass
 
-    if args.option == 'receiver':
-        cmd = ['iperf', '-Z', 'cubic', '-s', '-p', args.port]
-        check_call(cmd)
-        return
+    def setup_on_reboot(self):
+        pass
 
-    if args.option == 'sender':
-        cmd = ['iperf', '-Z', 'cubic', '-c', args.ip, '-p', args.port,
-               '-t', '75']
-        check_call(cmd)
-        return
+    def get_receiver_command(self, args) -> List[str]:
+        return ['iperf', '-Z', 'cubic', '-s', '-p', args.port]
+
+    def get_sender_command(self, args) -> List[str]:
+        return ['iperf', '-Z', 'cubic', '-c', args.ip, '-p', args.port, '-t', '75']
 
 
 if __name__ == '__main__':
-    main()
+    scheme = CC()
+    run_scheme(scheme, RunFirst.receiver)

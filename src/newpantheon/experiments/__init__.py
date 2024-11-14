@@ -37,7 +37,7 @@ def setup_args(subparsers):
     # experiment test
     parser_test = experiment_subparsers.add_parser('test', help="Run test for the experiment")
     parser_test.add_argument('-c', '--config_file', metavar='CONFIG',
-                               help='path to configuration file (note: command line arguments override options in the configuration file')
+                             help='path to configuration file (note: command line arguments override options in the configuration file')
 
     # Add specific arguments for 'experiment test' if needed
     test_subparsers = parser_test.add_subparsers(dest='mode', required=True)
@@ -84,6 +84,7 @@ def setup_args(subparsers):
     parser_remote_test.add_argument('--ntp-addr', metavar='HOST', help='address of an NTP server to query clock offset')
     parser_remote_test.add_argument('--local-desc', metavar='DESC', help='extra description of the local side')
     parser_remote_test.add_argument('--remote-desc', metavar='DESC', help='extra description of the remote side')
+
 
 def run(args):
     if args.experiment_command == "test":

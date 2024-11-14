@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from .experiment import Test
+from .experiment_old import Test
 from ..common import utils, context
 
 

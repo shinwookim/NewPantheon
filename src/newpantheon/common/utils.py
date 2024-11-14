@@ -111,3 +111,44 @@ def timeout_handler(signum, frame):
     raise TimeoutError()
 def utc_time():
     return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+
+
+def query_clock_offset(ntp_addr, param):
+    local_clock_offset = None
+    remote_clock_offset = None
+
+    ntp_cmds = {}
+    ntpdate_cmd = ['ntpdate', '-t', '5', '-quv', ntp_addr]
+
+    ntp_cmds['local'] = ntpdate_cmd
+    ntp_cmds['remote'] = ssh_cmd + ntpdate_cmd
+
+    for side in ['local', 'remote']:
+        cmd = ntp_cmds[side]
+
+        fail = True
+        for _ in range(3):
+            try:
+                offset = subprocess.check_output(cmd)
+                sys.stderr.write(offset)
+
+                offset = offset.rsplit(' ', 2)[-2]
+                offset = str(float(offset) * 1000)
+            except subprocess.CalledProcessError:
+                sys.stderr.write('Failed to get clock offset\n')
+            except ValueError:
+                sys.stderr.write('Cannot convert clock offset to float\n')
+            else:
+                if side == 'local':
+                    local_clock_offset = offset
+                else:
+                    remote_clock_offset = offset
+
+                fail = False
+                break
+
+        if fail:
+            sys.stderr.write('Failed after 3 queries to NTP server\n')
+
+    return local_clock_offset, remote_clock_offset
+

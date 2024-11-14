@@ -23,17 +23,6 @@ def kill_proc_group(proc, signum=SIGTERM):
         print(f"kill_proc_group: failed to kill process group {e}", file=sys.stderr)
 
 
-def parse_remote_path(remote_path, cc=None):
-    ret = {'host_addr': (remote_path.rsplit(':', 1))[0], 'base_dir': (remote_path.rsplit(':', 1))[1]}
-
-    ret['src_dir'] = Path(ret['base_dir']) / 'src'
-    ret['tmp_dir'] = Path(ret['base_dir']) / 'tmp'
-    ret['ip'] = ret['host_addr'].split('@')[-1]
-    ret['ssh_cmd'] = ['ssh', ret['host_addr']]
-    ret['tunnel_manager'] = Path(ret['src_dir']) / 'experiments' / 'tunnel_manager.py'
-    if cc is not None:
-        ret['cc_src'] = Path(ret['src_dir']) / 'newpantheon' / 'wrappers' / (cc + ".py")
-    return ret
 
 
 def get_git_summary(mode='local', remote_path=None):
@@ -78,19 +67,7 @@ git submodule foreach --quiet 'echo $path @ `git rev-parse @`; git status -s --u
         return local_git_summary
 
 
-def who_runs_first(cc):
-    cc_src = Path(context.src_dir) / 'wrappers' / (cc + '.py')
 
-    cmd = [cc_src, 'run_first']
-    run_first = subprocess.check_output(cmd).decode(sys.stdout.encoding).strip()
-    if run_first == 'receiver':
-        run_second = 'sender'
-    elif run_first == 'sender':
-        run_second = 'receiver'
-    else:
-        sys.exit('Must specify "receiver" or "sender" runs first')
-
-    return run_first, run_second
 
 
 def get_open_port():
@@ -112,43 +89,4 @@ def timeout_handler(signum, frame):
 def utc_time():
     return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 
-
-def query_clock_offset(ntp_addr, param):
-    local_clock_offset = None
-    remote_clock_offset = None
-
-    ntp_cmds = {}
-    ntpdate_cmd = ['ntpdate', '-t', '5', '-quv', ntp_addr]
-
-    ntp_cmds['local'] = ntpdate_cmd
-    ntp_cmds['remote'] = ssh_cmd + ntpdate_cmd
-
-    for side in ['local', 'remote']:
-        cmd = ntp_cmds[side]
-
-        fail = True
-        for _ in range(3):
-            try:
-                offset = subprocess.check_output(cmd)
-                sys.stderr.write(offset)
-
-                offset = offset.rsplit(' ', 2)[-2]
-                offset = str(float(offset) * 1000)
-            except subprocess.CalledProcessError:
-                sys.stderr.write('Failed to get clock offset\n')
-            except ValueError:
-                sys.stderr.write('Cannot convert clock offset to float\n')
-            else:
-                if side == 'local':
-                    local_clock_offset = offset
-                else:
-                    remote_clock_offset = offset
-
-                fail = False
-                break
-
-        if fail:
-            sys.stderr.write('Failed after 3 queries to NTP server\n')
-
-    return local_clock_offset, remote_clock_offset
 

@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-
-import sys
 import argparse
 import heapq
+import sys
 
 
 def parse_arguments():

@@ -1,13 +1,16 @@
-import json, yaml
+import json
+import yaml
 import sys
 from pathlib import Path
 from src.newpantheon.common import utils, context
 import subprocess
 
+
 def parse_config_file(cfg_file) -> dict:
     with open(cfg_file, "r") as f:
         config = yaml.load(f, Loader=yaml.CLoader)
         return config
+
 
 def setup_metadata(args, cc_schemes):
     meta = vars(args).copy()
@@ -27,17 +30,18 @@ def setup_metadata(args, cc_schemes):
     with open(metadata_path, "w") as f:
         json.dump(meta, f)
 
+
 def query_clock_offset(ntp_addr, ssh_cmd):
     local_clock_offset = None
     remote_clock_offset = None
 
     ntp_cmds = {}
-    ntpdate_cmd = ['ntpdate', '-t', '5', '-quv', ntp_addr]
+    ntpdate_cmd = ["ntpdate", "-t", "5", "-quv", ntp_addr]
 
-    ntp_cmds['local'] = ntpdate_cmd
-    ntp_cmds['remote'] = ssh_cmd + ntpdate_cmd
+    ntp_cmds["local"] = ntpdate_cmd
+    ntp_cmds["remote"] = ssh_cmd + ntpdate_cmd
 
-    for side in ['local', 'remote']:
+    for side in ["local", "remote"]:
         cmd = ntp_cmds[side]
 
         fail = True
@@ -45,14 +49,14 @@ def query_clock_offset(ntp_addr, ssh_cmd):
             try:
                 offset = subprocess.check_output(cmd).decode("utf-8")
                 print(offset, file=sys.stderr)
-                offset = offset.rsplit(' ', 2)[-2]
+                offset = offset.rsplit(" ", 2)[-2]
                 offset = str(float(offset) * 1000)
             except subprocess.CalledProcessError:
                 print("Failed to get clock offset", file=sys.stderr)
             except ValueError:
-                print('Cannot convert clock offset to float', file=sys.stderr)
+                print("Cannot convert clock offset to float", file=sys.stderr)
             else:
-                if side == 'local':
+                if side == "local":
                     local_clock_offset = offset
                 else:
                     remote_clock_offset = offset
@@ -63,28 +67,16 @@ def query_clock_offset(ntp_addr, ssh_cmd):
 
     return local_clock_offset, remote_clock_offset
 
+
 def who_runs_first(cc):
-    cc_src = Path(context.src_dir) / 'wrappers' / f"{cc}.py"
-    cmd = [cc_src, 'run_first']
+    cc_src = Path(context.src_dir) / "wrappers" / f"{cc}.py"
+    cmd = [cc_src, "run_first"]
     run_first = subprocess.check_output(cmd).decode(sys.stdout.encoding).strip()
-    if run_first == 'receiver':
-        run_second = 'sender'
-    elif run_first == 'sender':
-        run_second = 'receiver'
+    if run_first == "receiver":
+        run_second = "sender"
+    elif run_first == "sender":
+        run_second = "receiver"
     else:
         sys.exit('Must specify "receiver" or "sender" runs first')
 
     return run_first, run_second
-
-def parse_remote_path(remote_path, cc=None):
-    ret = {'host_addr': (remote_path.rsplit(':', 1))[0], 'base_dir': (remote_path.rsplit(':', 1))[1]}
-
-    ret['src_dir'] = Path(ret['base_dir']) / 'src'
-    ret['tmp_dir'] = Path(ret['base_dir']) / 'tmp'
-    ret['ip'] = ret['host_addr'].split('@')[-1]
-    ret['ssh_cmd'] = ['ssh', ret['host_addr']]
-    ret['tunnel_manager'] = Path(ret['src_dir']) / 'experiments' / 'tunnel_manager.py'
-    if cc is not None:
-        ret['cc_src'] = Path(ret['src_dir']) / 'newpantheon' / 'wrappers' / (cc + ".py")
-    return ret
-

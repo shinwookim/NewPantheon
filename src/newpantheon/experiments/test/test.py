@@ -208,7 +208,7 @@ class Test:
 
         # Setup output logs
         self.datalink_name = f"{self.cc}_datalink_run{self.run_id}"
-        self.acklink_name = f"{self.cc}_acklink_run%{self.run_id}"
+        self.acklink_name = f"{self.cc}_acklink_run{self.run_id}"
 
         self.datalink_log = path.join(self.data_dir, f"{self.datalink_name}.log")
         self.acklink_log = path.join(self.data_dir, f"{self.acklink_name}.log")

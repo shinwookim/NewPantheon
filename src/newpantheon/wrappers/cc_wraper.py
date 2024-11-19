@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from enum import StrEnum, auto
 from typing import List
+import sys
 
 
 class RunFirst(StrEnum):
@@ -40,22 +41,22 @@ def run_scheme(cc: CCScheme, run_first: RunFirst):
 
     match run_first:
         case RunFirst.sender:
-            pass
+            args = arg_parser.parse_wrapper_args("sender")
         case RunFirst.receiver:
-            pass
+            args = arg_parser.parse_wrapper_args("receiver")
+        case _:
+            sys.exit("Must specify sender or receiver")
 
-    args = arg_parser.receiver_first()
-
-    if args.option == 'deps':
+    if args.option == "deps":
         print(cc.get_deps())
         return
 
-    if args.option == 'receiver':
+    if args.option == "receiver":
         cmd = cc.get_receiver_command(args)
         check_call(cmd)
         return
 
-    if args.option == 'sender':
+    if args.option == "sender":
         cmd = cc.get_sender_command(args)
         check_call(cmd)
         return

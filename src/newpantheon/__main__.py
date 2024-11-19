@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
 
 import argparse
-from . import experiments
+from newpantheon import experiments
+
 
 def parse_app_args():
-    parser = argparse.ArgumentParser(description="Program for analysis and experiments using Pantheon")
+    parser = argparse.ArgumentParser(
+        description="Program for analysis and experiments using Pantheon"
+    )
 
     # Define top-level subcommands
-    subparsers = parser.add_subparsers(dest='command', required=True, help="Main commands")
+    subparsers = parser.add_subparsers(
+        dest="command", required=True, help="Main commands"
+    )
 
     experiments.setup_args(subparsers)
 
-    parser_analysis = subparsers.add_parser('analysis', help="Run analysis")
+    parser_analysis = subparsers.add_parser("analysis", help="Run analysis")
 
     # Parse arguments
     args = parser.parse_args()
     return args
+
 
 def main():
     parsed_args = parse_app_args()

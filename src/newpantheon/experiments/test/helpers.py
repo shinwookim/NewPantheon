@@ -2,7 +2,7 @@ import json
 import yaml
 import sys
 from pathlib import Path
-from src.newpantheon.common import utils, context
+from newpantheon.common import utils, context
 import subprocess
 
 
@@ -78,5 +78,4 @@ def who_runs_first(cc):
         run_second = "receiver"
     else:
         sys.exit('Must specify "receiver" or "sender" runs first')
-
     return run_first, run_second

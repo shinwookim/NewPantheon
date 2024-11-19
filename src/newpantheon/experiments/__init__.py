@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from .test import run_test
-from ..common import context
+from newpantheon.common import context
+from newpantheon.experiments.test import run_test
 
 
 def parse_test_shared(parser):
@@ -50,7 +50,7 @@ def parse_test_shared(parser):
     parser.add_argument(
         "--data-dir",
         metavar="DIR",
-        default=Path(context.src_dir) / "experiments" / "data",  # TODO: Change
+        default=str(Path(context.src_dir) / "experiments" / "data"),  # TODO: Change
         help="directory to save all test logs, graphs, "
         "metadata, and report (default pantheon/src/experiments/data)",
     )
@@ -65,14 +65,14 @@ def parse_test_local(parser):
     parser.add_argument(
         "--uplink-trace",
         metavar="TRACE",
-        default=Path(context.src_dir) / "experiments" / "12mbps.trace",
+        default=str(Path(context.src_dir) / "experiments" / "12mbps.trace"),
         help="uplink trace (from sender to receiver) to pass to mm-link "
         "(default pantheon/test/12mbps.trace)",
     )
     parser.add_argument(
         "--downlink-trace",
         metavar="TRACE",
-        default=Path(context.src_dir) / "experiments" / "12mbps.trace",
+        default=str(Path(context.src_dir) / "experiments" / "12mbps.trace"),
         help="downlink trace (from receiver to sender) to pass to mm-link "
         "(default pantheon/test/12mbps.trace)",
     )

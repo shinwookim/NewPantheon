@@ -6,7 +6,7 @@ from signal import SIGTERM
 from .logger import log_print
 
 
-def print_cmd(cmd: str):
+def print_cmd(cmd):
     if isinstance(cmd, list):
         cmd_to_print = " ".join(cmd).strip()
     elif isinstance(cmd, str):
@@ -39,12 +39,12 @@ def check_output(cmd, **kwargs):
 
 
 def write_stdin(proc, msg):
-    proc.stdin.write(msg.encode(sys.stdin))
+    proc.stdin.write(msg.encode("ascii"))
     proc.stdin.flush()
 
 
 def read_stdout(proc) -> str:
-    return proc.stdout.readline().decode(sys.stdout)
+    return proc.stdout.readline().decode("ascii")
 
 
 def kill_proc_group(proc, signum=SIGTERM):

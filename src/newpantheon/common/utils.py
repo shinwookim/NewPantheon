@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import subprocess
 import sys
 import socket
+from os import path
 from tempfile import NamedTemporaryFile
 from pathlib import Path
 
@@ -81,11 +82,13 @@ def parse_remote_path(remote_path, cc=None):
         "host_addr": (remote_path.rsplit(":", 1))[0],
         "base_dir": (remote_path.rsplit(":", 1))[1],
     }
-    ret["src_dir"] = Path(ret["base_dir"]) / "src"
-    ret["tmp_dir"] = Path(ret["base_dir"]) / "tmp"
+    ret["src_dir"] = path.join(ret["base_dir"], "src")
+    ret["tmp_dir"] = path.join(ret["base_dir"], "tmp")  # TODO: Better location?
     ret["ip"] = ret["host_addr"].split("@")[-1]
     ret["ssh_cmd"] = ["ssh", ret["host_addr"]]
-    ret["tunnel_manager"] = Path(ret["src_dir"]) / "experiments" / "tunnel_manager.py"
+    ret["tunnel_manager"] = path.join(
+        ret["src_dir"], "experiments", "tunnel_manager.py"
+    )
     if cc is not None:
-        ret["cc_src"] = Path(ret["src_dir"]) / "newpantheon" / "wrappers" / (cc + ".py")
+        ret["cc_src"] = path.join(ret["src_dir"], "newpantheon", "wrappers", f"{cc}.py")
     return ret

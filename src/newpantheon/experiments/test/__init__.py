@@ -1,12 +1,13 @@
 from pathlib import Path
-from ...common import context
-from .helpers import parse_config_file, setup_metadata
-from ...common.utils import parse_remote_path
-from random import shuffle
-from .test import Test
-from ...common.logger import log_print
-from ...common.process_manager import call
 from os import path
+from random import shuffle
+
+from newpantheon.experiments.test.helpers import parse_config_file, setup_metadata
+from newpantheon.common.utils import parse_remote_path
+from newpantheon.common import context
+from newpantheon.common.logger import log_print
+from newpantheon.common.process_manager import call
+from .test import Test  # TODO
 
 default_config_location: Path = context.src_dir / "experiments" / "default_config.yml"
 

@@ -6,13 +6,17 @@ from os import path
 from subprocess import PIPE
 from typing import List
 
-import newpantheon.common.process_manager
-import newpantheon.common.utils
-from . import helpers
-from .flow import Flow
-from ...common import context, utils
-from ...common.logger import log_print
-from ...common.process_manager import Popen, write_stdin, read_stdout, call
+from newpantheon.experiments.test import helpers
+from newpantheon.experiments.test.flow import Flow
+from newpantheon.common import context, utils
+from newpantheon.common.logger import log_print
+from newpantheon.common.process_manager import (
+    Popen,
+    write_stdin,
+    read_stdout,
+    call,
+    kill_proc_group,
+)
 
 
 class Test:
@@ -81,9 +85,7 @@ class Test:
             self.local_offset = None
             self.remote_offset = None
 
-            self.remote = newpantheon.common.utils.parse_remote_path(
-                args.remote_path, self.cc
-            )
+            self.remote = utils.parse_remote_path(args.remote_path, self.cc)
 
         self.test_config = args.test_config if hasattr(args, "test_config") else None
 
@@ -96,7 +98,7 @@ class Test:
             tun_id = 1
             for flow in self.test_config["flows"]:
                 cc = flow["scheme"]
-                run_first, run_second = helpers.who_runs_first(cc)  # TODO: Check
+                run_first, run_second = helpers.who_runs_first(cc)
                 self.flow_objs[tun_id] = Flow(
                     cc=cc,
                     cc_src_local=str(context.src_dir / "wrappers" / f"{cc}.py"),
@@ -131,10 +133,8 @@ class Test:
             "mm-link",
             uplink_trace,
             downlink_trace,
-            "--uplink-log=",
-            uplink_log,
-            "--downlink-log=",
-            downlink_log,
+            f"--uplink-log={uplink_log}",
+            f"--downlink-log={downlink_log}",
         ]
 
         if self.extra_mm_link_args:
@@ -275,6 +275,10 @@ class Test:
             preexec_fn=os.setsid,
         )
         ts_manager = self.ts_manager
+        while True:
+            running = read_stdout(ts_manager)
+            if "tunnel manager is running" in running:
+                break
         write_stdin(ts_manager, "prompt [tsm]\n")
 
         # Run tunnel CLIENT manager
@@ -298,10 +302,8 @@ class Test:
         while True:
             running = read_stdout(tc_manager)
             if "tunnel manager is running" in running:
-                log_print(running)
                 break
         write_stdin(tc_manager, "prompt [tcm]\n")
-
         return ts_manager, tc_manager
 
     def run_tunnel_server(self, tun_id, ts_manager):
@@ -318,11 +320,10 @@ class Test:
             else:
                 if self.local_if is not None:
                     ts_cmd = ts_cmd + " --interface=" + self.local_if
-
-        write_stdin(ts_manager, f"tunnel {tun_id} {ts_cmd}")
+        write_stdin(ts_manager, f"tunnel {tun_id} {ts_cmd}\n")
 
         # Read the command to run tunnel client
-        write_stdin(ts_manager, f"tunnel {tun_id} readline")
+        write_stdin(ts_manager, f"tunnel {tun_id} readline\n")
         return read_stdout(ts_manager).split()
 
     def run_tunnel_client(self, tun_id, tc_manager, cmd_to_run: List) -> bool:
@@ -334,12 +335,13 @@ class Test:
             else:
                 cmd_to_run[1] = self.local_addr
 
+        log_print(f"<run_tunnel_client> {cmd_to_run}")
         cmd_to_run_str: str = " ".join(cmd_to_run)
 
         if self.server_side == self.sender_side:
-            tc_cmd = f"{cmd_to_run_str} --ingress-log={self.datalink_ingress_logs[tun_id]} {self.acklink_egress_logs[tun_id]}"
+            tc_cmd = f"{cmd_to_run_str} --ingress-log={self.datalink_ingress_logs[tun_id]} --egress-log={self.acklink_egress_logs[tun_id]}"
         else:
-            tc_cmd = f"{cmd_to_run_str} --ingress-log={self.acklink_ingress_logs[tun_id]} {self.datalink_egress_logs[tun_id]}"
+            tc_cmd = f"{cmd_to_run_str} --ingress-log={self.acklink_ingress_logs[tun_id]} --egress-log={self.datalink_egress_logs[tun_id]}"
 
         if self.mode == "remote":
             if self.server_side == "remote":
@@ -395,9 +397,10 @@ class Test:
 
             port = utils.get_open_port()
 
-            first_cmd = f"tunnel {tun_id} python {first_src} {port}\n"
-            second_cmd = f"tunnel {tun_id} python {second_src} {recv_pri_ip} {port}\n"
-
+            first_cmd = f"tunnel {tun_id} python {first_src} receiver {port}\n"
+            second_cmd = (
+                f"tunnel {tun_id} python {second_src} sender {recv_pri_ip} {port}\n"
+            )
             write_stdin(recv_manager, first_cmd)
 
         elif self.run_first == "sender":
@@ -409,7 +412,6 @@ class Test:
 
             port = utils.get_open_port()
 
-            # TODO: rewrite with f strings
             first_cmd = f"tunnel {tun_id} python {first_src} sender {port}\n"
             second_cmd = (
                 f"tunnel {tun_id} python {second_src} receiver {send_pri_ip} {port}\n"
@@ -504,7 +506,6 @@ class Test:
         for tun_id in range(1, self.flows + 1):
             # run tunnel server for tunnel tun_id
             cmd_to_run_tc = self.run_tunnel_server(tun_id, ts_manager)
-
             # run tunnel client for tunnel tun_id
             if not self.run_tunnel_client(tun_id, tc_manager, cmd_to_run_tc):
                 return False
@@ -634,10 +635,12 @@ class Test:
 
             uid = uuid.uuid4()
             datalink_tun_log = os.path.join(
-                utils.tmp_dir, f"{self.datalink_name}_flow{tun_id}_uid{uid}.log.merged"
+                str(context.base_dir / "tmp"),
+                f"{self.datalink_name}_flow{tun_id}_uid{uid}.log.merged",
             )
             acklink_tun_log = os.path.join(
-                utils.tmp_dir, f"{self.acklink_name}_flow{tun_id}_uid{uid}.log.merged"
+                str(context.base_dir / "tmp"),
+                f"{self.acklink_name}_flow{tun_id}_uid{uid}.log.merged",
             )
             cmd = [
                 "python",
@@ -697,15 +700,15 @@ class Test:
             try:
                 return self.run_with_tunnel()
             finally:
-                newpantheon.common.process_manager.kill_proc_group(self.ts_manager)
-                newpantheon.common.process_manager.kill_proc_group(self.tc_manager)
+                kill_proc_group(self.ts_manager)
+                kill_proc_group(self.tc_manager)
         else:
             # test without pantheon tunnel when self.flows = 0
             try:
                 return self.run_without_tunnel()
             finally:
-                newpantheon.common.process_manager.kill_proc_group(self.first_process)
-                newpantheon.common.process_manager.kill_proc_group(self.second_process)
+                kill_proc_group(self.first_process)
+                kill_proc_group(self.second_process)
 
     def record_time_stats(self):
         stats_log = os.path.join(self.data_dir, f"{self.cc}_stats_run{self.run_id}.log")

@@ -547,7 +547,7 @@ class Test:
         # function to get a corresponding local path from a remote path
         def remote_path_to_local(p):
             return path.join(
-                str(context.base_dir / "tmp", path.basename(p)),
+                str(context.base_dir / "tmp"), path.basename(p),
             )
 
         if self.sender_side == "remote":

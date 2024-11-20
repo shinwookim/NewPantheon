@@ -147,6 +147,7 @@ class Test:
         """Ensure logs have correct local and remote paths"""
         # TODO: Find a better location/ensure this directory exists
         local_temp_dir = context.base_dir / "tmp"
+        local_temp_dir.mkdir(parents=False, exist_ok=True)
 
         for tun_id in range(1, self.flows + 1):
             uid = uuid.uuid4()

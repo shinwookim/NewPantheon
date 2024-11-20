@@ -335,7 +335,6 @@ class Test:
             else:
                 cmd_to_run[1] = self.local_addr
 
-        log_print(f"<run_tunnel_client> {cmd_to_run}")
         cmd_to_run_str: str = " ".join(cmd_to_run)
 
         if self.server_side == self.sender_side:
@@ -547,7 +546,8 @@ class Test:
         # function to get a corresponding local path from a remote path
         def remote_path_to_local(p):
             return path.join(
-                str(context.base_dir / "tmp"), path.basename(p),
+                str(context.base_dir / "tmp"),
+                path.basename(p),
             )
 
         if self.sender_side == "remote":

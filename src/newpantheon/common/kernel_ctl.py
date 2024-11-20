@@ -17,7 +17,7 @@ def load_kernel_module(module: str) -> None:
 def enable_congestion_control(cc) -> None:
     """Adds a congestion control algorithm to allowed list"""
     cc_list = check_output("sysctl net.ipv4.tcp_allowed_congestion_control", shell=True)
-    cc_list = cc_list.split("=")[-1].split()
+    cc_list = cc_list.split("=", maxsplit=1)[-1].split()
 
     # return if cc is already in the allowed congestion control list
     if cc in cc_list:

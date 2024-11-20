@@ -45,7 +45,7 @@ def check_call(cmd, **kwargs):
 def check_output(cmd, **kwargs):
     """subprocess.check_output equivalent"""
     print_cmd(cmd)
-    return subprocess.check_output(cmd, **kwargs)
+    return subprocess.check_output(cmd, text=True, **kwargs)
 
 
 def write_stdin(proc, msg) -> None:

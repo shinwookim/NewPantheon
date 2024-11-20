@@ -2,6 +2,7 @@ from pathlib import Path
 
 from newpantheon.common import context
 from newpantheon.experiments.test import run_test
+from newpantheon.experiments.setup import run_setup
 
 
 def parse_test_shared(parser):
@@ -154,6 +155,24 @@ def setup_args(subparsers):
         "setup", help="Setup the experiment"
     )
     # Add specific arguments for 'experiment setup' if needed
+    group = parser_setup.add_mutually_exclusive_group()
+    group.add_argument(
+        "--all",
+        action="store_true",
+        help="set up all schemes specified in src/config.yml",
+    )
+    group.add_argument(
+        "--schemes",
+        metavar='"SCHEME1 SCHEME2..."',
+        help="set up a space-separated list of schemes",
+    )
+
+    parser_setup.add_argument(
+        "--install-deps", action="store_true", help="install dependencies of schemes"
+    )
+    parser_setup.add_argument(
+        "--setup", action="store_true", help='run "setup" on each scheme'
+    )
 
     # experiment test
     parser_test = experiment_subparsers.add_parser(
@@ -187,5 +206,11 @@ def setup_args(subparsers):
 
 
 def run(args):
-    if args.experiment_command == "test":
-        run_test(args)
+    print(args)
+    match args.experiment_command:
+        case "test":
+            run_test(args)
+        case "setup":
+            run_setup(args)
+        case "default":
+            print("[Pantheon Experiment] Unknown command.")

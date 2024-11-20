@@ -3,8 +3,8 @@ from enum import StrEnum, auto
 from typing import List
 import sys
 
-from ..common.process_manager import check_call
-from . import arg_parser
+from newpantheon.common.process_manager import check_call
+from newpantheon.wrappers import arg_parser
 
 
 class RunFirst(StrEnum):
@@ -17,7 +17,7 @@ class CCScheme(ABC):
         pass
 
     @abstractmethod
-    def get_deps(self) -> str:
+    def get_deps(self) -> List[str]:
         pass
 
     @abstractmethod
@@ -38,7 +38,6 @@ class CCScheme(ABC):
 
 
 def run_scheme(cc: CCScheme, run_first: RunFirst):
-
     match run_first:
         case RunFirst.sender:
             args = arg_parser.parse_wrapper_args("sender")
@@ -48,7 +47,7 @@ def run_scheme(cc: CCScheme, run_first: RunFirst):
             sys.exit("Must specify sender or receiver")
 
     if args.option == "deps":
-        print(cc.get_deps())
+        print(" ".join(cc.get_deps()))
         return
 
     if args.option == "receiver":
@@ -59,4 +58,8 @@ def run_scheme(cc: CCScheme, run_first: RunFirst):
     if args.option == "sender":
         cmd = cc.get_sender_command(args)
         check_call(cmd)
+        return
+
+    if args.option == "setup_after_reboot":
+        cc.setup_on_reboot()
         return

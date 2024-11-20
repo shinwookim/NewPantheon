@@ -8,8 +8,7 @@ from newpantheon.common import context
 from newpantheon.common.logger import log_print
 from newpantheon.common.process_manager import call
 from .test import Test
-
-default_config_location: Path = context.src_dir / "experiments" / "default_config.yml"
+from newpantheon.common.context import default_config_location
 
 
 def run_test(args):

@@ -2,7 +2,7 @@
 from typing import List
 
 from cc_wraper import RunFirst, CCScheme, run_scheme
-from ..common import kernel_ctl
+from newpantheon.common import kernel_ctl
 
 
 def setup_vegas():
@@ -15,14 +15,14 @@ def setup_vegas():
 
 
 class CC(CCScheme):
-    def get_deps(self) -> str:
-        return "iperf"
+    def get_deps(self) -> List[str]:
+        return ["iperf"]
 
     def setup_first_time(self):
         pass
 
     def setup_on_reboot(self):
-        pass
+        setup_vegas()
 
     def get_receiver_command(self, args) -> List[str]:
         return ["iperf", "-Z", "vegas", "-s", "-p", args.port]

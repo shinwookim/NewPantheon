@@ -1,3 +1,8 @@
+"""
+Provides contexts for use in various Pantheon components.
+Mostly common directories
+"""
+
 from pathlib import Path
 import sys
 

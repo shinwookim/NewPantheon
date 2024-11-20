@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
-
 from enum import StrEnum, auto
 from typing import List
 import sys
+
+from ..common.process_manager import check_call
+from . import arg_parser
 
 
 class RunFirst(StrEnum):
@@ -36,8 +38,6 @@ class CCScheme(ABC):
 
 
 def run_scheme(cc: CCScheme, run_first: RunFirst):
-    from subprocess import check_call
-    import arg_parser
 
     match run_first:
         case RunFirst.sender:

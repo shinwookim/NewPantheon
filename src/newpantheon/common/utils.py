@@ -1,3 +1,5 @@
+"""Various utility functions used throughout Pantheon"""
+
 from datetime import datetime, timezone
 import subprocess
 import sys
@@ -22,14 +24,16 @@ git submodule foreach --quiet 'echo $path @ `git rev-parse @`; git status -s --u
         temp_file.flush()
         temp_file.seek(0)
         git_summary_src = Path(temp_file.name)
-        # Make the file executable
-        subprocess.run(["chmod", "+x", git_summary_src])
+        subprocess.run(
+            ["chmod", "+x", git_summary_src], check=False
+        )  # Make the file executable
         try:
             local_git_summary = subprocess.run(
                 ["sh", git_summary_src],
                 capture_output=True,
                 text=True,
                 cwd=context.base_dir,
+                check=True,
             ).stdout
         except subprocess.SubprocessError as e:
             print(f"An error occurred while executing the script: {e}", file=sys.stderr)
@@ -38,7 +42,7 @@ git submodule foreach --quiet 'echo $path @ `git rev-parse @`; git status -s --u
             parsed_path = parse_remote_path(remote_path)
             ssh_cmd = f"{' '.join(parsed_path['ssh_cmd'])} cd {parsed_path['base_dir']}; {git_summary_src}"
             remote_git_summary = subprocess.run(
-                ssh_cmd, capture_output=True, text=True
+                ssh_cmd, capture_output=True, text=True, check=True
             ).stdout
             if local_git_summary != remote_git_summary:
                 print(
@@ -83,7 +87,7 @@ def parse_remote_path(remote_path, cc=None):
         "base_dir": (remote_path.rsplit(":", 1))[1],
     }
     ret["src_dir"] = path.join(ret["base_dir"], "src")
-    ret["tmp_dir"] = path.join(ret["base_dir"], "tmp")  # TODO: Better location?
+    ret["tmp_dir"] = path.join(ret["base_dir"], "tmp")
     ret["ip"] = ret["host_addr"].split("@")[-1]
     ret["ssh_cmd"] = ["ssh", ret["host_addr"]]
     ret["tunnel_manager"] = path.join(

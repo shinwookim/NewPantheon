@@ -7,7 +7,7 @@ from newpantheon.common.utils import parse_remote_path
 from newpantheon.common import context
 from newpantheon.common.logger import log_print
 from newpantheon.common.process_manager import call
-from .test import Test  # TODO
+from .test import Test
 
 default_config_location: Path = context.src_dir / "experiments" / "default_config.yml"
 
@@ -43,7 +43,7 @@ def run_test(args):
 def pkill(args):
     log_print("Cleaning up using pkill...(enabled by --pkill-cleanup)")
     if args.mode == "remote":
-        r = parse_remote_path(args.remote_path)  # todo check
+        r = parse_remote_path(args.remote_path)
         remote_pkill_src = path.join(r["base_dir"], "tools", "pkill.py")
 
         cmd = r["ssh_cmd"] + ["python", remote_pkill_src, "--kill-dir", r["base_dir"]]

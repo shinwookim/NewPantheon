@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
+"""Main Entry Point for Pantheon"""
+
 import argparse
 from newpantheon import experiments
 
 
 def parse_app_args():
+    """Parse Arguments"""
     parser = argparse.ArgumentParser(
         description="Program for analysis and experiments using Pantheon"
     )
@@ -24,6 +27,7 @@ def parse_app_args():
 
 
 def main():
+    """Main Entrypoint for Pantheon"""
     parsed_args = parse_app_args()
     command_map = {
         "experiment": experiments.run,

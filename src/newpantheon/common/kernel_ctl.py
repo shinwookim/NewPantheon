@@ -1,5 +1,11 @@
+"""
+Helper functions for dealing with OS modules and changing settings.
+Mostly used by each congestion control algorithm wrapper.
+"""
+
 import sys
 from .process_manager import call, check_output, check_call
+from .logger import log_print
 
 
 def load_kernel_module(module: str) -> None:
@@ -8,7 +14,8 @@ def load_kernel_module(module: str) -> None:
         sys.exit(f"Failed while loading kernel module {module}")
 
 
-def enable_congestion_control(cc):
+def enable_congestion_control(cc) -> None:
+    """Adds a congestion control algorithm to allowed list"""
     cc_list = check_output("sysctl net.ipv4.tcp_allowed_congestion_control", shell=True)
     cc_list = cc_list.split("=")[-1].split()
 
@@ -24,28 +31,35 @@ def enable_congestion_control(cc):
 
 
 def check_qdisc(qdisc):
+    """Checks that a queuing discipline is set to default"""
     curr_qdisc = check_output("sysctl net.core.default_qdisc", shell=True)
     curr_qdisc = curr_qdisc.split("=")[-1].strip()
 
     if qdisc != curr_qdisc:
-        sys.exit("Error: current qdisc %s is not %s" % (curr_qdisc, qdisc))
+        sys.exit(f"Error: current qdisc {curr_qdisc} is not {qdisc}")
 
 
 def set_qdisc(qdisc):
+    """Sets a queuing discipline to default"""
     curr_qdisc = check_output("sysctl net.core.default_qdisc", shell=True)
     curr_qdisc = curr_qdisc.split("=")[-1].strip()
 
     if curr_qdisc != qdisc:
-        check_call("sudo sysctl -w net.core.default_qdisc=%s" % qdisc, shell=True)
-        sys.stderr.write("Changed default_qdisc from %s to %s\n" % (curr_qdisc, qdisc))
+        check_call(f"sudo sysctl -w net.core.default_qdisc={qdisc}", shell=True)
+        log_print(f"Changed default_qdisc from {curr_qdisc} to {qdisc}")
 
 
 def enable_ip_forwarding():
+    """Enables IPV4 IP Forwarding"""
     check_call("sudo sysctl -w net.ipv4.ip_forward=1", shell=True)
 
 
 def disable_rp_filter(interface):
-    rpf = "net.ipv4.conf.%s.rp_filter"
+    """
+    Disables reverse path filtering
+    See: https://sysctl-explorer.net/net/ipv4/rp_filter/
+    """
+    rpf = "net.ipv4.conf.%s.'rp_filter'"
 
-    check_call("sudo sysctl -w %s=0" % (rpf % interface), shell=True)
-    check_call("sudo sysctl -w %s=0" % (rpf % "all"), shell=True)
+    check_call(f"sudo sysctl -w {rpf % interface}=0", shell=True)
+    check_call(f"sudo sysctl -w {rpf % "all"}=0", shell=True)

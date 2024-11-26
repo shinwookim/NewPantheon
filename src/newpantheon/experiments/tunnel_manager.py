@@ -1,109 +1,152 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
+import os.path
 import os
-from os import path
 import sys
-import signal
+from enum import Enum, auto
+from pathlib import Path
+from signal import signal, SIGINT, SIGTERM
 from subprocess import Popen, PIPE
+from dataclasses import dataclass
+from typing import List, Optional, Dict
 
-import context
-from newpantheon.helpers import utils
+from newpantheon.common.logger import log_print
+from newpantheon.common.process_manager import kill_proc_group, write_stdin, read_stdout
+
+
+class CommandType(Enum):
+    TUNNEL = auto()
+    PROMPT = auto()
+    HALT = auto()
+    UNKNOWN = auto()
+
+
+@dataclass
+class Command:
+    type: CommandType
+    args: List[str]
+
+
+class TunnelManager:
+    def __init__(self):
+        self.prompt: Optional[str] = None
+        self.processes: Dict[int, Popen] = {}
+
+    def signal_cleanup(self, signum):
+        for t_id, proc in self.processes.items():
+            kill_proc_group(proc)
+        sys.exit(f"[Tunnel Manager]: Caught signal {signum} and cleaned up\n")
+
+    def log(self, message: str) -> None:
+        """Log a message with the current prompt if set."""
+        if self.prompt:
+            log_print(f"{self.prompt} {message}")
+
+    def parse_command(self, input_line: str) -> Command:
+        """Parse input line into a Command object."""
+        parts = input_line.strip().split()
+        if not parts:
+            return Command(CommandType.UNKNOWN, [])
+        command_type = {
+            "tunnel": CommandType.TUNNEL,
+            "prompt": CommandType.PROMPT,
+            "halt": CommandType.HALT,
+        }.get(parts[0], CommandType.UNKNOWN)
+        return Command(command_type, parts[1:])
+
+    def handle_tunnel_command(self, args: List[str]):
+        """Handle tunnel-related commands."""
+        if len(args) < 2:
+            log_print("error: not enough arguments\n\tUsage: ID CMD...")
+            return
+        try:
+            tunnel_id = int(args[0])
+        except ValueError:
+            log_print("error: invalid argument\n\tUsage: ID CMD...")
+            return
+        command = " ".join(args[1:])
+        if args[1] in {"mm-tunnelclient", "mm-tunnelserver"}:
+            self._handle_tunnel_process(tunnel_id, command)
+        elif args[1] == "python":
+            self._handle_python_command(tunnel_id, command)
+        elif args[1] == "readline":
+            self._handle_readline_command(tunnel_id)
+
+    def _handle_tunnel_process(self, tunnel_id: int, command: str):
+        """Starts a new process in the tunnel."""
+        command_parts = os.path.expandvars(command).split()
+        for i, part in enumerate(command_parts):
+            if any(flag in part for flag in ("--ingress-log", "--egress-log")):
+                name, value = part.split("=", 1)
+                command_parts[i] = f"{name}={str(Path(value).expanduser())}"
+        self.processes[tunnel_id] = Popen(
+            command_parts, stdin=PIPE, stdout=PIPE, preexec_fn=os.setsid
+        )
+
+    def _handle_python_command(self, tunnel_id: int, command: str):
+        """Execute python command in the tunnel."""
+        if tunnel_id not in self.processes:
+            log_print("error: run tunnel client or server first")
+            return
+        write_stdin(self.processes[tunnel_id], f"{command}\n")
+
+    def _handle_readline_command(self, tunnel_id: int):
+        """Read output from tunnel."""
+        if tunnel_id not in self.processes:
+            log_print("error: run tunnel client or server first")
+            return
+        print(read_stdout(self.processes[tunnel_id]), flush=True)
+
+    def handle_prompt_command(self, args: List[str]) -> None:
+        if len(args) != 1:
+            log_print("error: usage: prompt PROMPT")
+            return
+        self.prompt = args[0].strip()
+
+    def handle_halt_command(self, args: List[str]) -> None:
+        if args:
+            log_print("error: usage: halt")
+            return
+        for process in self.processes.values():
+            kill_proc_group(process)
+        sys.exit(0)
+
+    def run(self) -> None:
+        """Main Event Loop."""
+        while True:
+            try:
+                input_line = sys.stdin.readline().strip()
+                log_print(f"[Tunnel Manager] Got Input: {input_line}")
+                command = self.parse_command(input_line)
+                handlers = {
+                    CommandType.TUNNEL: lambda: self.handle_tunnel_command(
+                        command.args
+                    ),
+                    CommandType.PROMPT: lambda: self.handle_prompt_command(
+                        command.args
+                    ),
+                    CommandType.HALT: lambda: self.handle_halt_command(command.args),
+                    CommandType.UNKNOWN: lambda: print(
+                        f"unknown command: {input_line}", file=sys.stderr
+                    ),
+                }
+                handlers[command.type]()
+            except Exception as e:
+                log_print(f"error: {str(e)}")
+
+
+manager = TunnelManager()
+
+
+def stop_signal_handler(signum, frame):
+    manager.signal_cleanup(signum)
 
 
 def main():
-    prompt = ''
-    procs = {}
-
-    # register SIGINT and SIGTERM events to clean up gracefully before quit
-    def stop_signal_handler(signum, frame):
-        for tun_id in procs:
-            utils.kill_proc_group(procs[tun_id])
-
-        sys.exit('tunnel_manager: caught signal %s and cleaned up\n' % signum)
-
-    signal.signal(signal.SIGINT, stop_signal_handler)
-    signal.signal(signal.SIGTERM, stop_signal_handler)
-
-    sys.stdout.write('tunnel manager is running\n')
-    sys.stdout.flush()
-
-    while True:
-        input_cmd = sys.stdin.readline().strip()
-
-        # print all the commands fed into tunnel manager
-        if prompt:
-            sys.stderr.write(prompt + ' ')
-        sys.stderr.write(input_cmd + '\n')
-        cmd = input_cmd.split()
-
-        # manage I/O of multiple tunnels
-        if cmd[0] == 'tunnel':
-            if len(cmd) < 3:
-                sys.stderr.write('error: usage: tunnel ID CMD...\n')
-                continue
-
-            try:
-                tun_id = int(cmd[1])
-            except ValueError:
-                sys.stderr.write('error: usage: tunnel ID CMD...\n')
-                continue
-
-            cmd_to_run = ' '.join(cmd[2:])
-
-            if cmd[2] == 'mm-tunnelclient' or cmd[2] == 'mm-tunnelserver':
-                # expand env variables (e.g., MAHIMAHI_BASE)
-                cmd_to_run = path.expandvars(cmd_to_run).split()
-
-                # expand home directory
-                for i in range(len(cmd_to_run)):
-                    if ('--ingress-log' in cmd_to_run[i] or
-                        '--egress-log' in cmd_to_run[i]):
-                        t = cmd_to_run[i].split('=')
-                        cmd_to_run[i] = t[0] + '=' + path.expanduser(t[1])
-
-                procs[tun_id] = Popen(cmd_to_run, stdin=PIPE,
-                                      stdout=PIPE, preexec_fn=os.setsid)
-            elif cmd[2] == 'python':  # run python scripts inside tunnel
-                if tun_id not in procs:
-                    sys.stderr.write(
-                        'error: run tunnel client or server first\n')
-
-                procs[tun_id].stdin.write(cmd_to_run + '\n')
-                procs[tun_id].stdin.flush()
-            elif cmd[2] == 'readline':  # readline from stdout of tunnel
-                if len(cmd) != 3:
-                    sys.stderr.write('error: usage: tunnel ID readline\n')
-                    continue
-
-                if tun_id not in procs:
-                    sys.stderr.write(
-                        'error: run tunnel client or server first\n')
-
-                sys.stdout.write(procs[tun_id].stdout.readline())
-                sys.stdout.flush()
-            else:
-                sys.stderr.write('unknown command after "tunnel ID": %s\n'
-                                 % cmd_to_run)
-                continue
-        elif cmd[0] == 'prompt':  # set prompt in front of commands to print
-            if len(cmd) != 2:
-                sys.stderr.write('error: usage: prompt PROMPT\n')
-                continue
-
-            prompt = cmd[1].strip()
-        elif cmd[0] == 'halt':  # terminate all tunnel processes and quit
-            if len(cmd) != 1:
-                sys.stderr.write('error: usage: halt\n')
-                continue
-
-            for tun_id in procs:
-                utils.kill_proc_group(procs[tun_id])
-
-            sys.exit(0)
-        else:
-            sys.stderr.write('unknown command: %s\n' % input_cmd)
-            continue
+    signal(SIGINT, stop_signal_handler)
+    signal(SIGTERM, stop_signal_handler)
+    print("tunnel manager is running", flush=True)
+    manager.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

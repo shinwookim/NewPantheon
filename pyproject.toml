@@ -44,6 +44,9 @@ path = "src/newpantheon/__about__.py"
 
 [tool.hatch.envs.dev]
 features = ["dev"]
+type = "virtual"
+path = ".venv"
+
 
 [tool.hatch.envs.types]
 extra-dependencies = ["mypy>=1.0.0"]

@@ -1,42 +1,36 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+from typing import List
 
-from subprocess import Popen, check_call, check_output
-
-import arg_parser
-import context
-from newpantheon.helpers import kernel_ctl
+from cc_wraper import RunFirst, CCScheme, run_scheme
+from newpantheon.common import kernel_ctl
 
 
 def setup_vegas():
     # load tcp_vegas kernel module
-    kernel_ctl.load_kernel_module('tcp_vegas')
+    kernel_ctl.load_kernel_module("tcp_vegas")
 
     # add vegas to kernel-allowed congestion control list
-    kernel_ctl.enable_congestion_control('vegas')
+    kernel_ctl.enable_congestion_control("vegas")
+    pass
 
 
-def main():
-    args = arg_parser.receiver_first()
+class CC(CCScheme):
+    def get_deps(self) -> List[str]:
+        return ["iperf"]
 
-    if args.option == 'deps':
-        print('iperf')
-        return
+    def setup_first_time(self):
+        pass
 
-    if args.option == 'setup_after_reboot':
+    def setup_on_reboot(self):
         setup_vegas()
-        return
 
-    if args.option == 'receiver':
-        cmd = ['iperf', '-Z', 'vegas', '-s', '-p', args.port]
-        check_call(cmd)
-        return
+    def get_receiver_command(self, args) -> List[str]:
+        return ["iperf", "-Z", "vegas", "-s", "-p", args.port]
 
-    if args.option == 'sender':
-        cmd = ['iperf', '-Z', 'vegas', '-c', args.ip, '-p', args.port,
-               '-t', '75']
-        check_call(cmd)
-        return
+    def get_sender_command(self, args) -> List[str]:
+        return ["iperf", "-Z", "vegas", "-c", args.ip, "-p", args.port, "-t", "75"]
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    scheme = CC()
+    run_scheme(scheme, RunFirst.receiver)

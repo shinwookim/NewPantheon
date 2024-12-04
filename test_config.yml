@@ -1,0 +1,9 @@
+test-name: bbr-cubic 
+runtime: 30
+interval: 1
+random_order: true
+extra_mm_link_args: --uplink-queue=droptail --uplink-queue-args=packets=512
+prepend_mm_cmds: mm-delay 30
+flows:
+  - scheme: bbr
+  - scheme: default_tcp

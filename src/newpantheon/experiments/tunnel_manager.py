@@ -115,7 +115,7 @@ class TunnelManager:
         while True:
             try:
                 input_line = sys.stdin.readline().strip()
-                log_print(f"[Tunnel Manager] Got Input: {input_line}")
+                log_print(f"[Tunnel Manager {self.prompt}] Got Input: {input_line}")
                 command = self.parse_command(input_line)
                 handlers = {
                     CommandType.TUNNEL: lambda: self.handle_tunnel_command(

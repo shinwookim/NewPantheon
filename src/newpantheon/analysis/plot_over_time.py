@@ -4,7 +4,6 @@ import sys
 from os import path
 import math
 import time
-import matplotlib_agg
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
@@ -15,6 +14,7 @@ from newpantheon.helpers import utils
 
 class PlotThroughputTime(object):
     def __init__(self, args):
+        plt.use('Agg')
         self.data_dir = path.abspath(args.data_dir)
         self.ms_per_bin = args.ms_per_bin
         self.amplify = args.amplify

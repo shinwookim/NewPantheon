@@ -7,7 +7,6 @@ import json
 import multiprocessing
 from multiprocessing.pool import ThreadPool
 import numpy as np
-import matplotlib_agg
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
@@ -19,6 +18,7 @@ from newpantheon.helpers import utils
 
 class Plot(object):
     def __init__(self, args):
+        plt.use('Agg')
         self.data_dir = path.abspath(args.data_dir)
         self.include_acklink = args.include_acklink
         self.no_graphs = args.no_graphs

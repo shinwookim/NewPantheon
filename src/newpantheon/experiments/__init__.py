@@ -9,7 +9,6 @@ from newpantheon.experiments.test import run_test
 from newpantheon.experiments.setup import run_setup
 from newpantheon.experiments.test.helpers import utils
 
-
 def parse_test_shared(parser):
     parser.add_argument(
         "-f", "--flows", type=int, default=1, help="number of flows (default 1)"
@@ -251,6 +250,8 @@ def setup_args(subparsers, parser):
     )
     config_args, remaining_argv = config_parser.parse_known_args()
 
+    print("\n\nCONFIG ARGS:", config_args, "\n\nREMAINING_ARGV", remaining_argv)
+
     parse_test_shared(parser_local_test), parse_test_shared(parser_remote_test)
     parse_test_local(parser_local_test)
     parse_test_remote(parser_remote_test)
@@ -270,7 +271,6 @@ def setup_args(subparsers, parser):
 
     verify_test_args(args)
     utils.make_sure_dir_exists(args.data_dir)
-
     return args
 
 

@@ -11,6 +11,7 @@ from newpantheon.helpers import utils
 class PDF(FPDF):
     def __init__(self, args):
         super().__init__(orientation="P", unit="mm", format="A4")
+        self.set_auto_page_break(auto=True, margin=15)
         self.data_dir = path.abspath(args.data_dir)
         self.include_acklink = args.include_acklink
 
@@ -267,54 +268,60 @@ class PDF(FPDF):
         self.ln(10)  # Add some space after the figure
 
     def include_summary(self):
+        self.set_font("Arial", size=12)
+
         raw_summary = path.join(self.data_dir, 'pantheon_summary.pdf')
-        mean_summary = path.join(
-            self.data_dir, 'pantheon_summary_mean.pdf')
+        mean_summary = path.join(self.data_dir, 'pantheon_summary_mean.pdf')
 
         metadata_desc = self.describe_metadata()
+        self.multi_cell(0, 10, metadata_desc)
+        self.ln(10)  # Add some space
         self.summary_table()
 
-        self.latex.write(
-            '\\documentclass{article}\n'
-            '\\usepackage{pdfpages, graphicx, float}\n'
-            '\\usepackage{tabularx, pdflscape}\n'
-            '\\usepackage{textcomp}\n\n'
-            '\\newcolumntype{Y}{>{\\centering\\arraybackslash}X}\n'
-            '\\newcommand{\PantheonFig}[1]{%%\n'
-            '\\begin{figure}[H]\n'
-            '\\centering\n'
-            '\\IfFileExists{#1}{\includegraphics[width=\\textwidth]{#1}}'
-            '{Figure is missing}\n'
-            '\\end{figure}}\n\n'
-            '\\begin{document}\n'
-            '%s'
-            '\\PantheonFig{%s}\n\n'
-            '\\PantheonFig{%s}\n\n'
-            '\\newpage\n\n'
-            % (metadata_desc, mean_summary, raw_summary))
+        if path.isfile(raw_summary):
+            self.image(raw_summary, w=self.w - 20)  # Adjust width with padding
+        else:
+            self.cell(0, 10, "Figure is missing", align="C")
+        self.ln(10)  # Add some space after the figure
 
-        self.latex.write('%s\\newpage\n\n' % self.summary_table())
+        if path.isfile(mean_summary):
+            self.image(mean_summary, w=self.w - 20)  # Adjust width with padding
+        else:
+            self.cell(0, 10, "Figure is missing", align="C")
+        self.ln(10)  # Add some space after the figure
 
     def include_runs(self):
         cc_id = 0
         for cc in self.cc_schemes:
             cc_id += 1
-            cc_name = self.config['schemes'][cc]['name']
-            cc_name = cc_name.strip().replace('_', '\\_')
+            cc_name = self.config['schemes'][cc]['name'].strip().replace('_', ' ')
 
             for run_id in range(1, 1 + self.run_times):
-                fname = '%s_stats_run%s.log' % (cc, run_id)
+                fname = f"{cc}_stats_run{run_id}.log"
                 stats_log_path = path.join(self.data_dir, fname)
 
                 if path.isfile(stats_log_path):
-                    with open(stats_log_path) as stats_log:
+                    with open(stats_log_path, "r") as stats_log:
                         stats_info = stats_log.read()
                 else:
-                    stats_info = '%s does not exist\n' % stats_log_path
+                    stats_info = f"{stats_log_path} does not exist\n"
 
-                str_dict = {'cc_name': cc_name,
-                            'run_id': run_id,
-                            'stats_info': stats_info}
+                # Add a new page for each run
+                self.add_page()
+
+                # Write statistics information
+                self.set_font("Arial", style="B", size=12)
+                self.cell(0, 10, f"Run {run_id}: Statistics of {cc_name}", ln=True)
+                self.ln(5)
+
+                self.set_font("Courier", size=10)
+                self.multi_cell(0, 10, stats_info)
+                self.ln(5)
+
+                # Add graphs for Data Link
+                self.set_font("Arial", style="B", size=12)
+                self.cell(0, 10, f"Run {run_id}: Report of {cc_name} --- Data Link", ln=True)
+                self.ln(5)
 
                 link_directions = ['datalink']
                 if self.include_acklink:
@@ -323,30 +330,37 @@ class PDF(FPDF):
                 for link_t in link_directions:
                     for metric_t in ['throughput', 'delay']:
                         graph_path = path.join(
-                            self.data_dir, cc + '_%s_%s_run%s.png' %
-                            (link_t, metric_t, run_id))
-                        str_dict['%s_%s' % (link_t, metric_t)] = graph_path
+                            self.data_dir, f"{cc}_{link_t}_{metric_t}_run{run_id}.png"
+                        )
 
-                self.latex.write(
-                    '\\begin{verbatim}\n'
-                    'Run %(run_id)s: Statistics of %(cc_name)s\n\n'
-                    '%(stats_info)s'
-                    '\\end{verbatim}\n\n'
-                    '\\newpage\n\n'
-                    'Run %(run_id)s: Report of %(cc_name)s --- Data Link\n\n'
-                    '\\PantheonFig{%(datalink_throughput)s}\n\n'
-                    '\\PantheonFig{%(datalink_delay)s}\n\n'
-                    '\\newpage\n\n' % str_dict)
+                        if path.isfile(graph_path):
+                            self.image(graph_path, x=10, y=self.get_y(), w=190)
+                            self.ln(70)  # Adjust the spacing based on the image size
+                        else:
+                            self.set_font("Arial", style="I", size=10)
+                            self.cell(0, 10, f"Missing: {graph_path}", ln=True)
+                            self.ln(5)
 
+                    self.ln(5)
+
+                # Add graphs for ACK Link (if enabled)
                 if self.include_acklink:
-                    self.latex.write(
-                        'Run %(run_id)s: '
-                        'Report of %(cc_name)s --- ACK Link\n\n'
-                        '\\PantheonFig{%(acklink_throughput)s}\n\n'
-                        '\\PantheonFig{%(acklink_delay)s}\n\n'
-                        '\\newpage\n\n' % str_dict)
+                    self.set_font("Arial", style="B", size=12)
+                    self.cell(0, 10, f"Run {run_id}: Report of {cc_name} --- ACK Link", ln=True)
+                    self.ln(5)
 
-        self.latex.write('\\end{document}')
+                    for metric_t in ['throughput', 'delay']:
+                        graph_path = path.join(
+                            self.data_dir, f"{cc}_acklink_{metric_t}_run{run_id}.png"
+                        )
+
+                        if path.isfile(graph_path):
+                            self.image(graph_path, x=10, y=self.get_y(), w=190)
+                            self.ln(70)  # Adjust the spacing based on the image size
+                        else:
+                            self.set_font("Arial", style="I", size=10)
+                            self.cell(0, 10, f"Missing: {graph_path}", ln=True)
+                            self.ln(5)
 
     def run(self):
         report_uid = uuid.uuid4()

@@ -5,7 +5,6 @@ import sys
 import math
 import itertools
 import numpy as np
-import matplotlib_agg
 import matplotlib.pyplot as plt
 
 import arg_parser
@@ -14,6 +13,7 @@ import arg_parser
 class TunnelGraph(object):
     def __init__(self, tunnel_log, throughput_graph=None, delay_graph=None,
                  ms_per_bin=500):
+        plt.use('Agg')
         self.tunnel_log = tunnel_log
         self.throughput_graph = throughput_graph
         self.delay_graph = delay_graph

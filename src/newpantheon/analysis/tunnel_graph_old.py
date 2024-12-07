@@ -259,183 +259,137 @@ class TunnelGraph(object):
         empty_graph = True
         fig, ax = plt.subplots()
 
-        # Fill the link capacity if it exists
         if self.link_capacity:
             empty_graph = False
-            ax.fill_between(
-                self.link_capacity_t, 
-                0, 
-                self.link_capacity, 
-                facecolor='linen', 
-                label=f'Link Capacity (Avg: {self.avg_capacity:.2f} Mbit/s)' if self.avg_capacity else None
-            )
+            ax.fill_between(self.link_capacity_t, 0, self.link_capacity,
+                            facecolor='linen')
 
-        # Color cycle using Matplotlib's built-in color cycle
-        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        colors = ['b', 'g', 'r', 'y', 'c', 'm']
         color_i = 0
-
-        # Plot data for each flow
         for flow_id in self.flows:
-            color = colors[color_i % len(colors)]
+            color = colors[color_i]
 
             if flow_id in self.ingress_tput and flow_id in self.ingress_t:
                 empty_graph = False
-                ax.plot(
-                    self.ingress_t[flow_id], 
-                    self.ingress_tput[flow_id], 
-                    label=f'Flow {flow_id} ingress (mean {self.avg_ingress.get(flow_id, 0):.2f} Mbit/s)',
-                    color=color, 
-                    linestyle='--'
-                )
+                ax.plot(self.ingress_t[flow_id], self.ingress_tput[flow_id],
+                        label='Flow %s ingress (mean %.2f Mbit/s)'
+                        % (flow_id, self.avg_ingress.get(flow_id, 0)),
+                        color=color, linestyle='dashed')
 
             if flow_id in self.egress_tput and flow_id in self.egress_t:
                 empty_graph = False
-                ax.plot(
-                    self.egress_t[flow_id], 
-                    self.egress_tput[flow_id], 
-                    label=f'Flow {flow_id} egress (mean {self.avg_egress.get(flow_id, 0):.2f} Mbit/s)',
-                    color=color
-                )
+                ax.plot(self.egress_t[flow_id], self.egress_tput[flow_id],
+                        label='Flow %s egress (mean %.2f Mbit/s)'
+                        % (flow_id, self.avg_egress.get(flow_id, 0)),
+                        color=color)
 
             color_i += 1
+            if color_i == len(colors):
+                color_i = 0
 
-        # If no data, warn the user and exit
         if empty_graph:
             sys.stderr.write('No valid throughput graph is generated\n')
             return
 
-        # Configure axes labels
         ax.set_xlabel('Time (s)', fontsize=12)
         ax.set_ylabel('Throughput (Mbit/s)', fontsize=12)
 
-        # Set title if capacity data exists
         if self.link_capacity and self.avg_capacity:
-            ax.set_title(f'Average capacity {self.avg_capacity:.2f} Mbit/s (shaded region)')
+            ax.set_title('Average capacity %.2f Mbit/s (shaded region)'
+                         % self.avg_capacity)
 
-        # Add grid and legend
-        ax.grid(True)
+        ax.grid()
         handles, labels = ax.get_legend_handles_labels()
-        legend = ax.legend(
-            handles[::-1], 
-            labels[::-1], 
-            loc='upper center', 
-            bbox_to_anchor=(0.5, -0.1), 
-            ncol=2, 
-            fontsize=12
-        )
+        lgd = ax.legend(self.flip(handles, 2), self.flip(labels, 2),
+                        scatterpoints=1, bbox_to_anchor=(0.5, -0.1),
+                        loc='upper center', ncol=2, fontsize=12)
 
-        # Improve figure size and save with tight layout
         fig.set_size_inches(12, 6)
-        fig.savefig(
-            self.throughput_graph, 
-            bbox_extra_artists=(legend,), 
-            bbox_inches='tight', 
-            pad_inches=0.2, 
-            dpi=300  # Improved resolution
-        )
-        plt.close(fig)
+        fig.savefig(self.throughput_graph, bbox_extra_artists=(lgd,),
+                    bbox_inches='tight', pad_inches=0.2)
 
     def plot_delay_graph(self):
         empty_graph = True
         fig, ax = plt.subplots()
 
         max_delay = 0
-        # Use Matplotlib's default color cycle for better scalability
-        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        colors = ['b', 'g', 'r', 'y', 'c', 'm']
         color_i = 0
-
-        # Plot data for each flow
         for flow_id in self.flows:
-            color = colors[color_i % len(colors)]
+            color = colors[color_i]
             if flow_id in self.delays and flow_id in self.delays_t:
                 empty_graph = False
                 max_delay = max(max_delay, max(self.delays_t[flow_id]))
 
-                # Use scatter plot for delays
-                ax.scatter(
-                    self.delays_t[flow_id],
-                    self.delays[flow_id],
-                    s=1,
-                    color=color,
-                    marker='.',
-                    label=f'Flow {flow_id} (95th percentile {self.percentile_delay.get(flow_id, 0):.2f} ms)'
-                )
-                color_i += 1
+                ax.scatter(self.delays_t[flow_id], self.delays[flow_id], s=1,
+                           color=color, marker='.',
+                           label='Flow %s (95th percentile %.2f ms)'
+                           % (flow_id, self.percentile_delay.get(flow_id, 0)))
 
-        # Handle empty graph scenario
+                color_i += 1
+                if color_i == len(colors):
+                    color_i = 0
+
         if empty_graph:
             sys.stderr.write('No valid delay graph is generated\n')
             return
 
-        # Set x-axis limit and labels
         ax.set_xlim(0, int(math.ceil(max_delay)))
         ax.set_xlabel('Time (s)', fontsize=12)
         ax.set_ylabel('Per-packet one-way delay (ms)', fontsize=12)
 
-        # Add grid
-        ax.grid(True)
-
-        # Add legend with modernized options
+        ax.grid()
         handles, labels = ax.get_legend_handles_labels()
-        legend = ax.legend(
-            handles[::-1],
-            labels[::-1],
-            scatterpoints=1,
-            bbox_to_anchor=(0.5, -0.1),
-            loc='upper center',
-            ncol=3,
-            fontsize=12,
-            markerscale=2,  # Adjust marker scale for better visibility
-            handletextpad=0.5  # Space between legend marker and text
-        )
+        lgd = ax.legend(self.flip(handles, 3), self.flip(labels, 3),
+                        scatterpoints=1, bbox_to_anchor=(0.5, -0.1),
+                        loc='upper center', ncol=3, fontsize=12,
+                        markerscale=5, handletextpad=0)
 
-        # Configure figure size and save it
         fig.set_size_inches(12, 6)
-        fig.savefig(
-            self.delay_graph,
-            bbox_extra_artists=(legend,),
-            bbox_inches='tight',
-            pad_inches=0.2,
-            dpi=300  # Improved resolution
-        )
-
-        # Close the figure to free up memory
-        plt.close(fig)
+        fig.savefig(self.delay_graph, bbox_extra_artists=(lgd,),
+                    bbox_inches='tight', pad_inches=0.2)
 
     def statistics_string(self):
-        flows_str = 'flow' if len(self.flows) == 1 else 'flows'
-        ret = f"-- Total of {len(self.flows)} {flows_str}:\n"
+        if len(self.flows) == 1:
+            flows_str = 'flow'
+        else:
+            flows_str = 'flows'
+        ret = '-- Total of %d %s:\n' % (len(self.flows), flows_str)
 
         if self.avg_capacity is not None:
-            ret += f"Average capacity: {self.avg_capacity:.2f} Mbit/s\n"
+            ret += 'Average capacity: %.2f Mbit/s\n' % self.avg_capacity
 
         if self.total_avg_egress is not None:
-            ret += f"Average throughput: {self.total_avg_egress:.2f} Mbit/s"
-            if self.avg_capacity is not None:
-                utilization = 100.0 * self.total_avg_egress / self.avg_capacity
-                ret += f" ({utilization:.1f}% utilization)"
-            ret += "\n"
+            ret += 'Average throughput: %.2f Mbit/s' % self.total_avg_egress
+
+        if self.avg_capacity is not None and self.total_avg_egress is not None:
+            ret += ' (%.1f%% utilization)' % (
+                100.0 * self.total_avg_egress / self.avg_capacity)
+        ret += '\n'
 
         if self.total_percentile_delay is not None:
-            ret += f"95th percentile per-packet one-way delay: {self.total_percentile_delay:.3f} ms\n"
+            ret += ('95th percentile per-packet one-way delay: %.3f ms\n' %
+                    self.total_percentile_delay)
 
         if self.total_loss_rate is not None:
-            ret += f"Loss rate: {self.total_loss_rate * 100.0:.2f}%\n"
+            ret += 'Loss rate: %.2f%%\n' % (self.total_loss_rate * 100.0)
 
         for flow_id in self.flows:
-            ret += f"-- Flow {flow_id}:\n"
+            ret += '-- Flow %d:\n' % flow_id
 
-            avg_egress = self.avg_egress.get(flow_id)
-            if avg_egress is not None:
-                ret += f"Average throughput: {avg_egress:.2f} Mbit/s\n"
+            if (flow_id in self.avg_egress and
+                    self.avg_egress[flow_id] is not None):
+                ret += ('Average throughput: %.2f Mbit/s\n' %
+                        self.avg_egress[flow_id])
 
-            percentile_delay = self.percentile_delay.get(flow_id)
-            if percentile_delay is not None:
-                ret += f"95th percentile per-packet one-way delay: {percentile_delay:.3f} ms\n"
+            if (flow_id in self.percentile_delay and
+                    self.percentile_delay[flow_id] is not None):
+                ret += ('95th percentile per-packet one-way delay: %.3f ms\n' %
+                        self.percentile_delay[flow_id])
 
-            loss_rate = self.loss_rate.get(flow_id)
-            if loss_rate is not None:
-                ret += f"Loss rate: {loss_rate * 100.0:.2f}%\n"
+            if (flow_id in self.loss_rate and
+                    self.loss_rate[flow_id] is not None):
+                ret += 'Loss rate: %.2f%%\n' % (self.loss_rate[flow_id] * 100.)
 
         return ret
 
@@ -447,6 +401,8 @@ class TunnelGraph(object):
 
         if self.delay_graph:
             self.plot_delay_graph()
+
+        plt.close('all')
 
         tunnel_results = {}
         tunnel_results['throughput'] = self.total_avg_egress

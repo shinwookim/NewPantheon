@@ -22,10 +22,7 @@ def parse_tunnel_graph():
         help='delay graph to save as (default None)')
     parser.add_argument(
         '--ms-per-bin', metavar='MS-PER-BIN', type=int, default=500,
-        help='bin size in ms (default 500)')
-
-    args = parser.parse_args()
-    return args
+        help='bin size in ms (default 500)')   
 
 
 def parse_analyze_shared(parser):
@@ -50,10 +47,7 @@ def parse_plot():
     parser.add_argument(
         '--no-graphs', action='store_true', help='only append datalink '
         'statistics to stats files with no graphs generated')
-
-    args = parser.parse_args()
-
-    return args
+ 
 
 
 def parse_report():
@@ -63,10 +57,6 @@ def parse_report():
     parse_analyze_shared(parser)
     parser.add_argument('--include-acklink', action='store_true',
                         help='include acklink analysis')
-
-    args = parser.parse_args()
-
-    return args
 
 
 def parse_over_time():
@@ -80,21 +70,13 @@ def parse_over_time():
     parser.add_argument(
         '--amplify', metavar='FACTOR', type=float, default=1.0,
         help='amplication factor of output graph\'s x-axis scale ')
-
-    args = parser.parse_args()
-    
-    return args
+  
 
 def parse_analyze(parser):
     parse_analyze_shared(parser)
     parser.add_argument('--include-acklink', action='store_true',
                         help='include acklink analysis')
-
-    args = parser.parse_args()
-
-    return args
-
-
+    
 def setup_args(subparsers):
     parser_analysis = subparsers.add_parser("analysis", help="Run Analysis")
     args = parse_analyze(parser_analysis)

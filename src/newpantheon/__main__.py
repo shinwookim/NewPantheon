@@ -19,8 +19,7 @@ def parse_app_args():
 
     experiments.setup_args(subparsers)
 
-    parser_analysis = subparsers.add_parser("analysis", help="Run analysis")
-    analysis.setup_args(parser_analysis)
+    analysis.setup_args(subparsers)
 
     # Parse arguments
     args = parser.parse_args()

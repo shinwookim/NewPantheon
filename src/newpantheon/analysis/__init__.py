@@ -67,16 +67,16 @@ def parse_analyze(subparser):
 def setup_args(subparsers):
     parser_analysis = subparsers.add_parser("analysis", help="Run Analysis")
     
-    # Define nested subcommands for 'experiment'
+    # Define nested subcommands for 'analysis'
     analysis_subparsers = parser_analysis.add_subparsers(
-        dest="experiment_command", required=True
+        dest="analysis_command", required=True
     )
 
-    parse_tunnel_graph(analysis_subparsers.add_subparsers(
+    parse_tunnel_graph(analysis_subparsers.add_parser(
         'tunnel-graph', help='Evaluate throughput and delay of a tunnel log and generate graphs'))
-    parse_plot(analysis_subparsers.add_subparsers('plot', help='Plot throughput and delay graphs for schemes in tests'))
-    parse_report(analysis_subparsers.add_subparsers('report', help='Generate a PDF report summarizing test results'))
-    parse_over_time(analysis_subparsers.add_subparsers('over-time', help='Plot throughput-time graph for schemes in tests'))
+    parse_plot(analysis_subparsers.add_parser('plot', help='Plot throughput and delay graphs for schemes in tests'))
+    parse_report(analysis_subparsers.add_parser('report', help='Generate a PDF report summarizing test results'))
+    parse_over_time(analysis_subparsers.add_parser('over-time', help='Plot throughput-time graph for schemes in tests'))
 
     args = parser_analysis.parse_args()
 

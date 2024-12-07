@@ -2,12 +2,12 @@ import argparse
 import sys
 import yaml
 
-from helpers import utils
 from pathlib import Path
 
 from newpantheon.common import context
 from newpantheon.experiments.test import run_test
 from newpantheon.experiments.setup import run_setup
+from newpantheon.experiments.test.helpers import utils
 
 
 def parse_test_shared(parser):

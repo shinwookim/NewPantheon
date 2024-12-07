@@ -5,22 +5,18 @@ import sys
 
 from newpantheon.common import context
 
-def parse_tunnel_graph():
-    parser = argparse.ArgumentParser(
-        description='evaluate throughput and delay of a tunnel log and '
-        'generate graphs')
-
-    parser.add_argument('tunnel_log', metavar='tunnel-log',
+def parse_tunnel_graph(subparser):
+    subparser.add_argument('tunnel_log', metavar='tunnel-log',
                         help='tunnel log file')
-    parser.add_argument(
+    subparser.add_argument(
         '--throughput', metavar='OUTPUT-GRAPH',
         action='store', dest='throughput_graph',
         help='throughput graph to save as (default None)')
-    parser.add_argument(
+    subparser.add_argument(
         '--delay', metavar='OUTPUT-GRAPH',
         action='store', dest='delay_graph',
         help='delay graph to save as (default None)')
-    parser.add_argument(
+    subparser.add_argument(
         '--ms-per-bin', metavar='MS-PER-BIN', type=int, default=500,
         help='bin size in ms (default 500)')   
 
@@ -37,44 +33,35 @@ def parse_analyze_shared(parser):
         'of pantheon tests (default pantheon/experiments/data)')
 
 
-def parse_plot():
-    parser = argparse.ArgumentParser(
-        description='plot throughput and delay graphs for schemes in tests')
-
-    parse_analyze_shared(parser)
-    parser.add_argument('--include-acklink', action='store_true',
+def parse_plot(subparser):
+    parse_analyze_shared(subparser)
+    subparser.add_argument('--include-acklink', action='store_true',
                         help='include acklink analysis')
-    parser.add_argument(
+    subparser.add_argument(
         '--no-graphs', action='store_true', help='only append datalink '
         'statistics to stats files with no graphs generated')
  
 
 
-def parse_report():
-    parser = argparse.ArgumentParser(
-        description='generate a PDF report that summarizes test results')
-
-    parse_analyze_shared(parser)
-    parser.add_argument('--include-acklink', action='store_true',
+def parse_report(subparser):
+    parse_analyze_shared(subparser)
+    subparser.add_argument('--include-acklink', action='store_true',
                         help='include acklink analysis')
 
 
-def parse_over_time():
-    parser = argparse.ArgumentParser(
-        description='plot a throughput-time graph for schemes in tests')
-
-    parse_analyze_shared(parser)
-    parser.add_argument(
+def parse_over_time(subparser):
+    parse_analyze_shared(subparser)
+    subparser.add_argument(
         '--ms-per-bin', metavar='MS-PER-BIN', type=int, default=500,
         help='bin size in ms (default 500)')
-    parser.add_argument(
+    subparser.add_argument(
         '--amplify', metavar='FACTOR', type=float, default=1.0,
         help='amplication factor of output graph\'s x-axis scale ')
   
 
-def parse_analyze(parser):
-    parse_analyze_shared(parser)
-    parser.add_argument('--include-acklink', action='store_true',
+def parse_analyze(subparser):
+    parse_analyze_shared(subparser)
+    subparser.add_argument('--include-acklink', action='store_true',
                         help='include acklink analysis')
     
 def setup_args(subparsers):

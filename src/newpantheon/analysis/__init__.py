@@ -78,7 +78,7 @@ def setup_args(subparsers):
     parse_report(analysis_subparsers.add_parser('report', help='Generate a PDF report summarizing test results'))
     parse_over_time(analysis_subparsers.add_parser('over-time', help='Plot throughput-time graph for schemes in tests'))
 
-    args = parser_analysis.parse_args()
+    args = analysis_subparsers.parse_args()
 
     analysis_dir = path.join(context.src_dir, 'analysis')
     plot = path.join(analysis_dir, 'plot.py')

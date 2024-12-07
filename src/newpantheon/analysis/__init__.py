@@ -110,13 +110,13 @@ def run(args):
     plot_cmd = ['python', plot]
     report_cmd = ['python', report]
 
-    for cmd in [plot_cmd, report_cmd]:
-        if args.data_dir:
-            cmd += ['--data-dir', args.data_dir]
-        if args.schemes:
-            cmd += ['--schemes', args.schemes]
-        if args.include_acklink:
-            cmd += ['--include-acklink']
+    # for cmd in [plot_cmd, report_cmd]:
+    #     if args.data_dir:
+    #         cmd += ['--data-dir', args.data_dir]
+    #     if args.schemes:
+    #         cmd += ['--schemes', args.schemes]
+    #     if args.include_acklink:
+    #         cmd += ['--include-acklink']
 
     
     if args.schemes is None:

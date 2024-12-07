@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 import arg_parser
-import context
+# import context
 from newpantheon.helpers import utils
 
 
@@ -46,7 +46,6 @@ class PlotThroughputTime(object):
             line = tunlog.readline()
             if not line:
                 break
-
             if '#' in line:
                 continue
 

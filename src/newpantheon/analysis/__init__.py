@@ -78,22 +78,22 @@ def setup_args(subparsers):
     parse_report(analysis_subparsers.add_parser('report', help='Generate a PDF report summarizing test results'))
     parse_over_time(analysis_subparsers.add_parser('over-time', help='Plot throughput-time graph for schemes in tests'))
 
-    args = analysis_subparsers.parse_args()
+    # args = analysis_subparsers.parse_args()
 
-    analysis_dir = path.join(context.src_dir, 'analysis')
-    plot = path.join(analysis_dir, 'plot.py')
-    report = path.join(analysis_dir, 'report.py')
+    # analysis_dir = path.join(context.src_dir, 'analysis')
+    # plot = path.join(analysis_dir, 'plot.py')
+    # report = path.join(analysis_dir, 'report.py')
 
-    plot_cmd = ['python', plot]
-    report_cmd = ['python', report]
+    # plot_cmd = ['python', plot]
+    # report_cmd = ['python', report]
 
-    for cmd in [plot_cmd, report_cmd]:
-        if args.data_dir:
-            cmd += ['--data-dir', args.data_dir]
-        if args.schemes:
-            cmd += ['--schemes', args.schemes]
-        if args.include_acklink:
-            cmd += ['--include-acklink']
+    # for cmd in [plot_cmd, report_cmd]:
+    #     if args.data_dir:
+    #         cmd += ['--data-dir', args.data_dir]
+    #     if args.schemes:
+    #         cmd += ['--schemes', args.schemes]
+    #     if args.include_acklink:
+    #         cmd += ['--include-acklink']
 
 def run(args):
     print(args)

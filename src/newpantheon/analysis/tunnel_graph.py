@@ -6,8 +6,9 @@ import math
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
+from analysis import parse_tunnel_graph
 
-import arg_parser
+# import arg_parser
 
 
 class TunnelGraph(object):
@@ -474,7 +475,7 @@ class TunnelGraph(object):
 
 
 def main():
-    args = arg_parser.parse_tunnel_graph()
+    args = parse_tunnel_graph()
 
     tunnel_graph = TunnelGraph(
         tunnel_log=args.tunnel_log,

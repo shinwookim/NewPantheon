@@ -1,11 +1,10 @@
 import re
 import uuid
+import numpy as np
 from fpdf import FPDF
-from pylab import title, figure, xlabel, ylabel, xticks, bar, legend, axis, savefig
-import pandas as pd
-import matplotlib
 from os import path
 from newpantheon.helpers import utils
+from analysis import parse_report
 
 
 class PDF(FPDF):
@@ -373,8 +372,8 @@ class PDF(FPDF):
 
 
 def main():
-    args = arg_parser.parse_report()
-    doc = PDF(args)
+    args = parse_report()
+    PDF(args)
 
 
 if __name__ == '__main__':

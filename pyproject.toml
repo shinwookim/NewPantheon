@@ -39,6 +39,7 @@ dev = [
     "pre-commit",
     "fpdf",
     "matplotlib",
+    "numpy",
 ]
 
 [tool.hatch.version]

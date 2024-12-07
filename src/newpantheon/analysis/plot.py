@@ -10,10 +10,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-import arg_parser
+# import arg_parser
 import tunnel_graph
 # import context
 from newpantheon.helpers import utils
+from analysis import parse_plot
 
 
 class Plot(object):
@@ -25,7 +26,7 @@ class Plot(object):
 
         metadata_path = path.join(self.data_dir, 'pantheon_metadata.json')
         meta = utils.load_test_metadata(metadata_path)
-        self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+        # self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
 
         self.run_times = meta['run_times']
         self.flows = meta['flows']
@@ -330,7 +331,7 @@ class Plot(object):
 
 
 def main():
-    args = arg_parser.parse_plot()
+    args = parse_plot()
     Plot(args).run()
 
 

@@ -7,8 +7,9 @@ import time
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-import arg_parser
+# import arg_parser
 # import context
+from analysis import parse_over_time
 from newpantheon.helpers import utils
 
 
@@ -21,7 +22,7 @@ class PlotThroughputTime(object):
 
         metadata_path = path.join(self.data_dir, 'pantheon_metadata.json')
         meta = utils.load_test_metadata(metadata_path)
-        self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+        # self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
 
         self.run_times = meta['run_times']
         self.flows = meta['flows']
@@ -167,7 +168,7 @@ class PlotThroughputTime(object):
 
 
 def main():
-    args = arg_parser.parse_over_time()
+    args = parse_over_time()
     PlotThroughputTime(args).run()
 
 

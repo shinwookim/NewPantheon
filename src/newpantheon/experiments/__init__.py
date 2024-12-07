@@ -1,3 +1,8 @@
+import argparse
+import sys
+import yaml
+
+from helpers import utils
 from pathlib import Path
 
 from newpantheon.common import context
@@ -142,7 +147,46 @@ def parse_test_remote(parser):
     )
 
 
-def setup_args(subparsers):
+def parse_test_config(test_config, local, remote):
+    # Check config file has atleast a test-name and a description of flows
+    if 'test-name' not in test_config:
+        sys.exit('Config file must have a test-name argument')
+    if 'flows' not in test_config:
+        sys.exit('Config file must specify flows')
+
+    defaults = {}
+    defaults.update(**test_config)
+    defaults['schemes'] = None
+    defaults['all'] = False
+    defaults['flows'] = len(test_config['flows'])
+    defaults['test_config'] = test_config
+
+    local.set_defaults(**defaults)
+    remote.set_defaults(**defaults)
+
+
+def verify_test_args(args):
+    if args.flows == 0:
+        prepend = getattr(args, 'prepend_mm_cmds', None)
+        append = getattr(args, 'append_mm_cmds', None)
+        extra = getattr(args, 'extra_mm_link_args', None)
+        if append is not None or prepend is not None or extra is not None:
+            sys.exit('Cannot apply --prepend-mm-cmds, --append-mm-cmds or '
+                     '--extra-mm-link-args without pantheon tunnels')
+
+    if args.runtime > 60 or args.runtime <= 0:
+        sys.exit('runtime cannot be non-positive or greater than 60 s')
+    if args.flows < 0:
+        sys.exit('flow cannot be negative')
+    if args.interval < 0:
+        sys.exit('interval cannot be negative')
+    if args.flows > 0 and args.interval > 0:
+        if (args.flows - 1) * args.interval > args.runtime:
+            sys.exit('interval time between flows is too long to be '
+                     'fit in runtime')
+
+
+def setup_args(subparsers, parser):
     parser_experiment = subparsers.add_parser("experiment", help="Run experiment")
 
     # Define nested subcommands for 'experiment'
@@ -178,15 +222,10 @@ def setup_args(subparsers):
     parser_test = experiment_subparsers.add_parser(
         "test", help="Run test for the experiment"
     )
-    parser_test.add_argument(
-        "-c",
-        "--config_file",
-        metavar="CONFIG",
-        help="path to configuration file (note: command line arguments override options in the configuration file",
-    )
 
     # Add specific arguments for 'experiment test' if needed
     test_subparsers = parser_test.add_subparsers(dest="mode", required=True)
+
     parser_local_test = test_subparsers.add_parser(
         "local", help="test schemes locally in mahimahi emulated networks"
     )
@@ -200,9 +239,39 @@ def setup_args(subparsers):
         help="HOST ([user@]IP) and PANTHEON-DIR (remote pantheon directory)",
     )
 
+    # Config Parser
+    config_parser = argparse.ArgumentParser(
+        description="Parser for config file"
+    )
+    config_parser.add_argument(
+        "-c",
+        "--config_file",
+        metavar="CONFIG",
+        help="path to configuration file (note: command line arguments override options in the configuration file",
+    )
+    config_args, remaining_argv = config_parser.parse_known_args()
+
     parse_test_shared(parser_local_test), parse_test_shared(parser_remote_test)
     parse_test_local(parser_local_test)
     parse_test_remote(parser_remote_test)
+
+    # Make settings in config file the defaults
+    test_config = None
+    if config_args.config_file is not None:
+        with open(config_args.config_file) as f:
+            test_config = yaml.safe_load(f)
+        parse_test_config(test_config, parser_local_test, parser_remote_test)
+
+    args = parser.parse_args(remaining_argv)
+    if hasattr(config_args, "config_file") and config_args.config_file is not None:
+        args.config_file = config_args.config_file
+    else:
+        args.config_file = None
+
+    verify_test_args(args)
+    utils.make_sure_dir_exists(args.data_dir)
+
+    return args
 
 
 def run(args):

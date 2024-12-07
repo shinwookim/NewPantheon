@@ -473,7 +473,7 @@ class Test:
                 write_stdin(recv_manager, second_cmd)
             else:
                 assert hasattr(self, "flow_objs")
-                flow = self.flow_objs[i]
+                flow = self.flow_objs[i+1]
                 if flow.run_first == "receiver":
                     write_stdin(send_manager, second_cmd)
                 elif flow.run_first == "sender":

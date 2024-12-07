@@ -67,11 +67,11 @@ def parse_analyze(subparser):
 def setup_args(subparsers):
     parser_analysis = subparsers.add_parser("analysis", help="Run Analysis")
     
-    parse_tunnel_graph(parser_analysis.add_parser(
+    parse_tunnel_graph(parser_analysis.add_subparsers(
         'tunnel-graph', help='Evaluate throughput and delay of a tunnel log and generate graphs'))
-    parse_plot(parser_analysis.add_parser('plot', help='Plot throughput and delay graphs for schemes in tests'))
-    parse_report(parser_analysis.add_parser('report', help='Generate a PDF report summarizing test results'))
-    parse_over_time(parser_analysis.add_parser('over-time', help='Plot throughput-time graph for schemes in tests'))
+    parse_plot(parser_analysis.add_subparsers('plot', help='Plot throughput and delay graphs for schemes in tests'))
+    parse_report(parser_analysis.add_subparsers('report', help='Generate a PDF report summarizing test results'))
+    parse_over_time(parser_analysis.add_subparsers('over-time', help='Plot throughput-time graph for schemes in tests'))
 
     args = parser_analysis.parse_args()
 

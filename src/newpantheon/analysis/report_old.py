@@ -1,38 +1,35 @@
+#!/usr/bin/env python
+
+import sys
+import os
+from os import path
 import re
 import uuid
-from fpdf import FPDF
-from pylab import title, figure, xlabel, ylabel, xticks, bar, legend, axis, savefig
-import pandas as pd
-import matplotlib
-from os import path
+import numpy as np
+
+import arg_parser
+import context
 from newpantheon.helpers import utils
+from newpantheon.helpers.subprocess_wrappers import check_call, check_output
 
 
-class PDF(FPDF):
+class Report(object):
     def __init__(self, args):
-        super().__init__(orientation="P", unit="mm", format="A4")
         self.data_dir = path.abspath(args.data_dir)
         self.include_acklink = args.include_acklink
 
         metadata_path = path.join(args.data_dir, 'pantheon_metadata.json')
         self.meta = utils.load_test_metadata(metadata_path)
-        # self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, self.meta)
+        self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, self.meta)
 
         self.run_times = self.meta['run_times']
         self.flows = self.meta['flows']
         self.config = utils.parse_config()
 
-    def header(self):
-        self.set_font("Arial", "B", 12)
-        self.cell(0, 10, "Pantheon Report", align="C", ln=True)
-
-    def footer(self):
-        self.set_y(-15)
-        self.set_font("Arial", "I", 8)
-        self.cell(0, 10, f"Page {self.page_no()}", align="C")
-
     def describe_metadata(self):
-        self.multi_cell(0, 10, 'Generated at %s (UTC).\n\n' % utils.utc_time())
+        desc = '\\centerline{\\textbf{\\large{Pantheon Report}}}\n'
+        desc += '\\vspace{20pt}\n\n'
+        desc += 'Generated at %s (UTC).\n\n' % utils.utc_time()
 
         meta = self.meta
 
@@ -48,30 +45,39 @@ class PDF(FPDF):
 
             mm_cmd = ' '.join(mm_cmd).replace('_', '\\_')
 
-            self.multi_cell(0, 10, f"Tested in mahimahi: {mm_cmd}\n\n")
+            desc += 'Tested in mahimahi: \\texttt{%s}\n\n' % mm_cmd
         elif meta['mode'] == 'remote':
-            txt = {side: [] for side in ['local', 'remote']}
+            txt = {}
             for side in ['local', 'remote']:
-                if f"{side}_desc" in meta:
-                    txt[side].append(meta[f"{side}_desc"])
-                if f"{side}_if" in meta:
-                    txt[side].append(f"on {meta[f'{side}_if']}")
+                txt[side] = []
+
+                if '%s_desc' % side in meta:
+                    txt[side].append(meta['%s_desc' % side])
+
+                if '%s_if' % side in meta:
+                    txt[side].append('on \\texttt{%s}' % meta['%s_if' % side])
+
                 txt[side] = ' '.join(txt[side]).replace('_', '\\_')
 
             if meta['sender_side'] == 'remote':
-                self.multi_cell(0, 10, f"Data path: {txt['remote']} (remote) → {txt['local']} (local).\n\n")
+                desc += ('Data path: %s (\\textit{remote}) \\textrightarrow '
+                         '%s (\\textit{local}).\n\n') % (
+                             txt['remote'], txt['local'])
             else:
-                self.multi_cell(0, 10, f"Data path: {txt['local']} (local) → {txt['remote']} (remote).\n\n")
+                desc += ('Data path: %s (\\textit{local}) \\textrightarrow '
+                         '%s (\\textit{remote}).\n\n') % (
+                             txt['local'], txt['remote'])
 
         if meta['flows'] == 1:
             flows = '1 flow'
         else:
-            flows = f'{meta['flows']} flows with {meta['interval']}-second interval between two flows'
+            flows = ('%s flows with %s-second interval between two flows' %
+                     (meta['flows'], meta['interval']))
 
         if meta['runtime'] == 1:
             runtime = '1 second'
         else:
-            runtime = f'{meta['runtime']} seconds'
+            runtime = '%s seconds' % meta['runtime']
 
         run_times = meta['run_times']
         if run_times == 1:
@@ -79,113 +85,84 @@ class PDF(FPDF):
         elif run_times == 2:
             times = 'twice'
         else:
-            times = '{run_times} times'
+            times = '%s times' % run_times
 
-        self.multi_cell(0, 10, f"Repeated the test of {len(self.cc_schemes)} congestion control schemes {times}.\n")
-        self.multi_cell(0, 10, f"Each test lasted for {runtime} running {flows}.\n\n")
+        desc += (
+            'Repeated the test of %d congestion control schemes %s.\n\n'
+            'Each test lasted for %s running %s.\n\n'
+            % (len(self.cc_schemes), times, runtime, flows))
 
         if 'ntp_addr' in meta:
-            self.multi_cell(0, 10, f"NTP offsets were measured against {meta['ntp_addr']} and applied to logs.\n\n")
+            desc += ('NTP offsets were measured against \\texttt{%s} and have '
+                     'been applied to correct the timestamps in logs.\n\n'
+                     % meta['ntp_addr'])
 
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, "System info:", ln=True)
+        desc += (
+            '\\begin{verbatim}\n'
+            'System info:\n'
+            '%s'
+            '\\end{verbatim}\n\n' % utils.get_sys_info())
 
-        self.set_font('Courier', '', 10)
-        self.multi_cell(0, 10, f"{utils.get_sys_info().decode('utf-8')}")
-        
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, "Git Summary:", ln=True)
+        desc += (
+            '\\begin{verbatim}\n'
+            'Git summary:\n'
+            '%s'
+            '\\end{verbatim}\n\n' % meta['git_summary'])
+        desc += '\\newpage\n\n'
 
-        self.set_font('Courier', '', 10)
-        self.multi_cell(0, 10, meta['git_summary'])
-
-        # Add a page break
-        self.add_page()
+        return desc
 
     def create_table(self, data):
-        self.add_page(orientation="L")
-        self.set_font("Arial", "B", 10)
+        align = ' c | c'
+        for data_t in ['tput', 'delay', 'loss']:
+            align += ' | ' + ' '.join(['Y' for _ in range(self.flows)])
+        align += ' '
 
-        # Header Row
-        header = ["Scheme", "# Runs"]
-        for _ in range(self.flows):
-            header.extend([f"Flow {_+1} Tput", f"Flow {_+1} Delay", f"Flow {_+1} Loss"])
-        self.set_fill_color(200, 200, 200)
-        self.cell(40, 10, "Scheme", border=1, fill=True)
-        self.cell(20, 10, "# Runs", border=1, fill=True)
-        for _ in range(self.flows):
-            self.cell(40, 10, f"Flow {_+1} Tput", border=1, fill=True)
-            self.cell(40, 10, f"Flow {_+1} Delay", border=1, fill=True)
-            self.cell(40, 10, f"Flow {_+1} Loss", border=1, fill=True)
-        self.ln()
+        flow_cols = ' & '.join(
+            ['flow %d' % flow_id for flow_id in range(1, 1 + self.flows)])
 
-        # Data Rows
-        self.set_font("Arial", size=10)
+        table_width = 0.9 if self.flows == 1 else ''
+        table = (
+            '\\begin{landscape}\n'
+            '\\centering\n'
+            '\\begin{tabularx}{%(width)s\linewidth}{%(align)s}\n'
+            '& & \\multicolumn{%(flows)d}{c|}{mean avg tput (Mbit/s)}'
+            ' & \\multicolumn{%(flows)d}{c|}{mean 95th-\\%%ile delay (ms)}'
+            ' & \\multicolumn{%(flows)d}{c}{mean loss rate (\\%%)} \\\\\n'
+            'scheme & \\# runs & %(flow_cols)s & %(flow_cols)s & %(flow_cols)s'
+            ' \\\\\n'
+            '\\hline\n'
+        ) % {'width': table_width,
+             'align': align,
+             'flows': self.flows,
+             'flow_cols': flow_cols}
+
         for cc in self.cc_schemes:
-            flow_data = {data_t: [] for data_t in ['tput', 'delay', 'loss']}
+            flow_data = {}
             for data_t in ['tput', 'delay', 'loss']:
+                flow_data[data_t] = []
                 for flow_id in range(1, self.flows + 1):
-                    mean_value = np.mean(data[cc][flow_id][data_t]) if data[cc][flow_id][data_t] else "N/A"
-                    flow_data[data_t].append(f"{mean_value:.2f}" if isinstance(mean_value, float) else mean_value)
+                    if data[cc][flow_id][data_t]:
+                        mean_value = np.mean(data[cc][flow_id][data_t])
+                        flow_data[data_t].append('%.2f' % mean_value)
+                    else:
+                        flow_data[data_t].append('N/A')
 
-            self.cell(40, 10, data[cc]['name'], border=1)
-            self.cell(20, 10, str(data[cc]['valid_runs']), border=1)
-            for idx in range(self.flows):
-                self.cell(40, 10, flow_data['tput'][idx], border=1)
-                self.cell(40, 10, flow_data['delay'][idx], border=1)
-                self.cell(40, 10, flow_data['loss'][idx], border=1)
-            self.ln()
+            table += (
+                '%(name)s & %(valid_runs)s & %(flow_tputs)s & '
+                '%(flow_delays)s & %(flow_losses)s \\\\\n'
+            ) % {'name': data[cc]['name'],
+                 'valid_runs': data[cc]['valid_runs'],
+                 'flow_tputs': ' & '.join(flow_data['tput']),
+                 'flow_delays': ' & '.join(flow_data['delay']),
+                 'flow_losses': ' & '.join(flow_data['loss'])}
 
-        # align = ' c | c'
-        # for data_t in ['tput', 'delay', 'loss']:
-        #     align += ' | ' + ' '.join(['Y' for _ in range(self.flows)])
-        # align += ' '
+        table += (
+            '\\end{tabularx}\n'
+            '\\end{landscape}\n\n'
+        )
 
-        # flow_cols = ' & '.join(
-        #     ['flow %d' % flow_id for flow_id in range(1, 1 + self.flows)])
-
-        # table_width = 0.9 if self.flows == 1 else ''
-        # table = (
-        #     '\\begin{landscape}\n'
-        #     '\\centering\n'
-        #     '\\begin{tabularx}{%(width)s\linewidth}{%(align)s}\n'
-        #     '& & \\multicolumn{%(flows)d}{c|}{mean avg tput (Mbit/s)}'
-        #     ' & \\multicolumn{%(flows)d}{c|}{mean 95th-\\%%ile delay (ms)}'
-        #     ' & \\multicolumn{%(flows)d}{c}{mean loss rate (\\%%)} \\\\\n'
-        #     'scheme & \\# runs & %(flow_cols)s & %(flow_cols)s & %(flow_cols)s'
-        #     ' \\\\\n'
-        #     '\\hline\n'
-        # ) % {'width': table_width,
-        #      'align': align,
-        #      'flows': self.flows,
-        #      'flow_cols': flow_cols}
-
-        # for cc in self.cc_schemes:
-        #     flow_data = {}
-        #     for data_t in ['tput', 'delay', 'loss']:
-        #         flow_data[data_t] = []
-        #         for flow_id in range(1, self.flows + 1):
-        #             if data[cc][flow_id][data_t]:
-        #                 mean_value = np.mean(data[cc][flow_id][data_t])
-        #                 flow_data[data_t].append('%.2f' % mean_value)
-        #             else:
-        #                 flow_data[data_t].append('N/A')
-
-        #     table += (
-        #         '%(name)s & %(valid_runs)s & %(flow_tputs)s & '
-        #         '%(flow_delays)s & %(flow_losses)s \\\\\n'
-        #     ) % {'name': data[cc]['name'],
-        #          'valid_runs': data[cc]['valid_runs'],
-        #          'flow_tputs': ' & '.join(flow_data['tput']),
-        #          'flow_delays': ' & '.join(flow_data['delay']),
-        #          'flow_losses': ' & '.join(flow_data['loss'])}
-
-        # table += (
-        #     '\\end{tabularx}\n'
-        #     '\\end{landscape}\n\n'
-        # )
-
-        # return table
+        return table
 
     def summary_table(self):
         data = {}
@@ -256,15 +233,6 @@ class PDF(FPDF):
                     data[cc]['valid_runs'] += 1
 
         return self.create_table(data)
-    
-    def add_figure(self, figure_path):
-        """Add a figure to the PDF if it exists, otherwise add a placeholder."""
-        if path.isfile(figure_path):
-            self.image(figure_path, w=self.w - 20)  # Adjust width with padding
-        else:
-            self.set_font("Arial", size=12, style='B')
-            self.cell(0, 10, "Figure is missing", align="C")
-        self.ln(10)  # Add some space after the figure
 
     def include_summary(self):
         raw_summary = path.join(self.data_dir, 'pantheon_summary.pdf')
@@ -272,7 +240,6 @@ class PDF(FPDF):
             self.data_dir, 'pantheon_summary_mean.pdf')
 
         metadata_desc = self.describe_metadata()
-        self.summary_table()
 
         self.latex.write(
             '\\documentclass{article}\n'
@@ -350,17 +317,27 @@ class PDF(FPDF):
 
     def run(self):
         report_uid = uuid.uuid4()
-        pdf_path = path.join(self.data_dir, f"pantheon_report_{report_uid}.pdf")
+        latex_path = path.join(utils.tmp_dir, 'pantheon_report_%s.tex' % report_uid)
+        self.latex = open(latex_path, 'w')
         self.include_summary()
         self.include_runs()
-        self.output(pdf_path)
-        
-        print(f"Saved pantheon_report.pdf in {self.data_dir}")
+        self.latex.close()
+
+        cmd = ['pdflatex', '-halt-on-error', '-jobname',
+               'pantheon_report_%s' % report_uid, latex_path]
+        check_call(cmd, cwd=utils.tmp_dir)
+
+        pdf_src_path = path.join(utils.tmp_dir, 'pantheon_report_%s.pdf' % report_uid)
+        pdf_dst_path = path.join(self.data_dir, 'pantheon_report.pdf')
+        os.rename(pdf_src_path, pdf_dst_path)
+
+        sys.stderr.write(
+            'Saved pantheon_report.pdf in %s\n' % self.data_dir)
 
 
 def main():
     args = arg_parser.parse_report()
-    doc = PDF(args)
+    Report(args).run()
 
 
 if __name__ == '__main__':

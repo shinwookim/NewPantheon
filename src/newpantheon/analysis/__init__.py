@@ -5,6 +5,8 @@ import sys
 
 from newpantheon.common import context
 
+import plot, plot_over_time, report, tunnel_graph
+
 def parse_tunnel_graph(subparser):
     subparser.add_argument('tunnel_log', metavar='tunnel-log',
                         help='tunnel log file')
@@ -80,10 +82,6 @@ def setup_args(subparsers):
 
 def run(args):
     print(args)
-    analysis_dir = path.join(context.src_dir, 'analysis')
-    plot = path.join(analysis_dir, 'plot.py')
-    report = path.join(analysis_dir, 'report.py')
-
     plot_cmd = ['python', plot]
     report_cmd = ['python', report]
 
@@ -95,5 +93,14 @@ def run(args):
         if args.include_acklink:
             cmd += ['--include-acklink']
 
-src_dir = path.abspath(path.join(path.dirname(__file__), os.pardir))
-sys.path.append(src_dir)
+    match args.experiment_command:
+        case "report":
+            report.run(args)
+        case "plot":
+            plot.run(args)
+        case "over-time":
+            plot_over_time.run()
+        case "tunnel-graph":
+            tunnel_graph.run()
+        case "default":
+            print("[Pantheon Analysis] Unknown command.")

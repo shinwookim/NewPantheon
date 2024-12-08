@@ -330,7 +330,6 @@ class Test:
         # Read the command to run tunnel client
         write_stdin(ts_manager, f"tunnel {tun_id} readline\n")
 
-        time.sleep(3)
         t = read_stdout(ts_manager, '#')
         return t.split()
     def run_tunnel_client(self, tun_id, tc_manager, cmd_to_run: List) -> bool:
@@ -515,9 +514,9 @@ class Test:
         second_cmds = []
         for tun_id in range(1, self.flows + 1):
             # run tunnel server for tunnel tun_id
-            time.sleep(1)
+
             cmd_to_run_tc = self.run_tunnel_server(tun_id, ts_manager)
-            time.sleep(1)
+
             # run tunnel client for tunnel tun_id
             if not self.run_tunnel_client(tun_id, tc_manager, cmd_to_run_tc):
                 return False

@@ -1,11 +1,11 @@
-import argparse
-import os
 from os import path
-import sys
 
 from newpantheon.common import context
 
-import plot, plot_over_time, report, tunnel_graph
+from plot import run
+from plot_over_time import run
+from report import run
+from tunnel_graph import run
 
 def parse_tunnel_graph(subparser):
     subparser.add_argument('tunnel_log', metavar='tunnel-log',

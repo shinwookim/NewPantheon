@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 # import arg_parser
-import tunnel_graph
+# import tunnel_graph
 # import context
 from newpantheon.helpers import utils
-from analysis import parse_plot
+from analysis import parse_plot, tunnel_graph
 
 
 class Plot(object):

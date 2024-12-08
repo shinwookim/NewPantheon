@@ -250,7 +250,7 @@ def setup_args(subparsers, parser):
     )
     config_args, remaining_argv = config_parser.parse_known_args()
 
-    print("\n\nCONFIG ARGS:", config_args, "\n\nREMAINING_ARGV", remaining_argv)
+    # print("\n\nCONFIG ARGS:", config_args, "\n\nREMAINING_ARGV", remaining_argv)
 
     parse_test_shared(parser_local_test), parse_test_shared(parser_remote_test)
     parse_test_local(parser_local_test)
@@ -275,7 +275,7 @@ def setup_args(subparsers, parser):
 
 
 def run(args):
-    print(args)
+    # print(args)
     match args.experiment_command:
         case "test":
             run_test(args)

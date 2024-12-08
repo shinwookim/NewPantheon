@@ -5,6 +5,7 @@ import uuid
 from os import path
 from subprocess import PIPE
 from typing import List
+import sys
 
 from newpantheon.experiments.test import helpers
 from newpantheon.experiments.test.flow import Flow
@@ -88,9 +89,9 @@ class Test:
             self.remote = utils.parse_remote_path(args.remote_path, self.cc)
 
         self.test_config = args.test_config if hasattr(args, "test_config") else None
-        print("\nBJKDL:SAHFJDKL:SJKFL:SAJFKLD:SSJF\n")
+        # print("\nBJKDL:SAHFJDKL:SJKFL:SAJFKLD:SSJF\n")
         if self.test_config is not None:
-            print("\nAHSDALKFHDKASL:FHSLK:JDSKLF:HSASJKFL:JDSKFL:HDSKLF:JASL\n")
+            # print("\nAHSDALKFHDKASL:FHSLK:JDSKLF:HSASJKFL:JDSKFL:HDSKLF:JASL\n")
             self.cc = self.test_config["test-name"]
 
             cc_src_remote_dir = self.remote["base_dir"] if self.mode == "remote" else ""
@@ -98,7 +99,7 @@ class Test:
             self.flow_objs = {}
             tun_id = 1
             for flow in self.test_config["flows"]:
-                print('FLOW', tun_id, ':', flow["scheme"])
+                # print('FLOW', tun_id, ':', flow["scheme"])
                 cc = flow["scheme"]
                 run_first, run_second = helpers.who_runs_first(cc)
                 self.flow_objs[tun_id] = Flow(
@@ -109,7 +110,7 @@ class Test:
                     run_second=run_second,
                 )
                 tun_id = tun_id + 1
-            print('FLOWS', self.flow_objs)
+            # print('FLOWS', self.flow_objs)
 
     def setup_mm_cmd(self):
         """Setup commands for MahiMahi"""
@@ -330,10 +331,10 @@ class Test:
         write_stdin(ts_manager, f"tunnel {tun_id} readline\n")
 
         time.sleep(3)
-        return read_stdout(ts_manager).split()
-
+        t = read_stdout(ts_manager, '#')
+        return t.split()
     def run_tunnel_client(self, tun_id, tc_manager, cmd_to_run: List) -> bool:
-        print("\n\nCMD_TO_RUN:", cmd_to_run)
+        # print("\n\nCMD_TO_RUN:", cmd_to_run)
         if self.mode == "local":
             cmd_to_run[1] = "$MAHIMAHI_BASE"
         else:
@@ -375,7 +376,7 @@ class Test:
                 signal.signal(signal.SIGALRM, utils.timeout_handler)
                 signal.alarm(20)
                 try:
-                    got_connection = read_stdout(tc_manager)
+                    got_connection = read_stdout(tc_manager, '#')
                     log_print("Tunnel is connected")
                 except utils.TimeoutError:
                     log_print("Tunnel connection timeout")
@@ -395,7 +396,7 @@ class Test:
         first_src, second_src = self.cc_src, self.cc_src
         first_cmd, second_cmd = "", ""
         if self.run_first == "receiver":
-            print("-----------RECEIVER RUNNING FIRST-----------")
+            # print("-----------RECEIVER RUNNING FIRST-----------")
             if self.mode == "remote":
                 if self.sender_side == "local":
                     first_src = self.remote["cc_src"]
@@ -411,7 +412,7 @@ class Test:
             write_stdin(recv_manager, first_cmd)
 
         elif self.run_first == "sender":
-            print("-----------SENDER RUNNING FIRST-----------")
+            # print("-----------SENDER RUNNING FIRST-----------")
             if self.mode == "remote":
                 if self.sender_side == "local":
                     second_src = self.remote["cc_src"]
@@ -429,7 +430,7 @@ class Test:
 
         # get run_first and run_second from the flow object
         else:
-            print("-----------FLOWS RUNNING FIRST-----------")
+            # print("-----------FLOWS RUNNING FIRST-----------")
             assert hasattr(self, "flow_objs")
             flow = self.flow_objs[tun_id]
 

@@ -9,8 +9,7 @@ import yaml
 import subprocess
 from datetime import datetime
 
-import context
-from subprocess_wrappers import check_call, check_output, call
+from helpers import context, subprocess_wrappers.check_call, subprocess_wrappers.check_output, subprocess_wrappers.call
 
 
 def get_open_port():

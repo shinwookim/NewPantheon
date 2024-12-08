@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 import subprocess
 import sys
 import socket
+import os
+import errno
 from os import path
 from tempfile import NamedTemporaryFile
 from pathlib import Path
@@ -71,6 +73,14 @@ def get_open_port():
 
 class TimeoutError(Exception):
     pass
+
+
+def make_sure_dir_exists(d):
+    try:
+        os.makedirs(d)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
 
 
 def timeout_handler(signum, frame):

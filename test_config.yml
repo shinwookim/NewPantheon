@@ -1,0 +1,4 @@
+test-name: cubic-vegas
+flows:
+  - scheme: cubic
+  - scheme: vegas

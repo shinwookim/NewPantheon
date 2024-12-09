@@ -34,8 +34,6 @@ class Plot(object):
         else:
             self.cc_schemes = [args.schemes.replace(" ", "-")]
             self.individual_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
-        # print(self.cc_schemes)
-        # self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
 
         self.run_times = meta['run_times']
         self.flows = meta['flows']

@@ -168,6 +168,7 @@ class Plot(object):
 
         while cc_id < len(self.cc_schemes):
             cc = self.cc_schemes[cc_id]
+            print("In plot", cc)
             perf_data[cc][run_id] = pool.apply_async(
                 self.parse_tunnel_log, args=(cc, run_id))
 

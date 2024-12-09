@@ -134,12 +134,9 @@ def run(args):
         with open(file_path, 'r') as f:
             # Load the JSON data into a Python dictionary
             data = json.load(f)
-        # print(type(dict_keys(data["cc_schemes"])), list(data["cc_schemes"]))
         schemes_str = data["cc_schemes"]
         schemes_str = schemes_str[schemes_str.find("[")+1:schemes_str.find("]")]
         args.schemes = " ".join(ast.literal_eval(schemes_str))
-        
-    print("Schemes", args.schemes)
 
     plot.run(args)
     plot_over_time.run(args)

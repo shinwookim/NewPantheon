@@ -17,8 +17,6 @@ def parse_app_args():
         dest="command", required=True, help="Main commands"
     )
 
-    experiments.setup_args(subparsers)
-
     analysis.setup_args(subparsers)
 
     args = experiments.setup_args(subparsers, parser)

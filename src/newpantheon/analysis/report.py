@@ -132,6 +132,7 @@ class PDF(FPDF):
         self.ln()
 
         # Data Rows
+        print(data)
         self.set_font("Times", size=10)
         for cc in self.cc_schemes:
             flow_data = {data_t: [] for data_t in ['tput', 'delay', 'loss']}
@@ -189,8 +190,10 @@ class PDF(FPDF):
                 valid_run = False
                 flow_id = 1
 
+                print(stats_log_path)
                 while True:
                     line = stats_log.readline()
+                    # print(line)
                     if not line:
                         break
 

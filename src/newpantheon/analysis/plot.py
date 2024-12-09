@@ -7,26 +7,30 @@ import json
 import multiprocessing
 from multiprocessing.pool import ThreadPool
 import numpy as np
+
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+matplotlib.use('Agg')
 
 # import arg_parser
 # import tunnel_graph
 # import context
 from newpantheon.helpers import utils
-from analysis import parse_plot, tunnel_graph
+from newpantheon.analysis import tunnel_graph
+# from analysis import parse_plot, tunnel_graph
 
 
 class Plot(object):
     def __init__(self, args):
-        plt.use('Agg')
+        # plt.use('Agg')
         self.data_dir = path.abspath(args.data_dir)
         self.include_acklink = args.include_acklink
         self.no_graphs = args.no_graphs
 
         metadata_path = path.join(self.data_dir, 'pantheon_metadata.json')
         meta = utils.load_test_metadata(metadata_path)
-        # self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+        self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
 
         self.run_times = meta['run_times']
         self.flows = meta['flows']
@@ -79,12 +83,12 @@ class Plot(object):
                 error = True
                 continue
 
-            if self.no_graphs:
-                tput_graph_path = None
-                delay_graph_path = None
-            else:
-                tput_graph_path = path.join(self.data_dir, f"{cc}_{link_t}_throughput_run{run_id}.png")
-                delay_graph_path = path.join(self.data_dir, f"{cc}_{link_t}_delay_run{run_id}.png")
+            # if self.no_graphs:
+            #     tput_graph_path = None
+            #     delay_graph_path = None
+            # else:
+            tput_graph_path = path.join(self.data_dir, f"{cc}_{link_t}_throughput_run{run_id}.png")
+            delay_graph_path = path.join(self.data_dir, f"{cc}_{link_t}_delay_run{run_id}.png")
 
             sys.stderr.write(f"$ tunnel_graph {log_path}\n")
             try:
@@ -274,10 +278,10 @@ class Plot(object):
 
         # save pantheon_summary.svg and .pdf
         ax_raw.set_title(self.expt_title.strip(), y=1.02, fontsize=12)
-        lgd = ax_raw.legend(scatterpoints=1, bbox_to_anchor=(1, 0.5),
-                            loc='center left', fontsize=12)
+        lgd = ax_raw.legend(scatterpoints=1, bbox_to_anchor=(0.5, -0.15),
+                            loc='upper center', fontsize=12)
 
-        for graph_format in ['svg', 'pdf']:
+        for graph_format in ['svg', 'pdf', 'png']:
             raw_summary = path.join(
                 self.data_dir, 'pantheon_summary.%s' % graph_format)
             fig_raw.savefig(raw_summary, dpi=300, bbox_extra_artists=(lgd,),
@@ -287,7 +291,7 @@ class Plot(object):
         ax_mean.set_title(self.expt_title +
                           ' (mean of all runs by scheme)', fontsize=12)
 
-        for graph_format in ['svg', 'pdf']:
+        for graph_format in ['svg', 'pdf', 'png']:
             mean_summary = path.join(
                 self.data_dir, 'pantheon_summary_mean.%s' % graph_format)
             fig_mean.savefig(mean_summary, dpi=300,
@@ -320,8 +324,8 @@ class Plot(object):
                 if flow_data is not None:
                     data_for_json[cc][run_id] = flow_data
 
-        if not self.no_graphs:
-            self.plot_throughput_delay(data_for_plot)
+        # if not self.no_graphs:
+        self.plot_throughput_delay(data_for_plot)
 
         plt.close('all')
 
@@ -329,6 +333,9 @@ class Plot(object):
         with open(perf_path, 'w') as fh:
             json.dump(data_for_json, fh)
 
+def run(args):
+    plot = Plot(args)
+    plot.run()
 
 def main():
     args = parse_plot()

@@ -5,8 +5,11 @@ import sys
 import math
 import itertools
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
-from analysis import parse_tunnel_graph
+
+matplotlib.use('Agg')
+# from analysis import parse_tunnel_graph
 
 # import arg_parser
 
@@ -14,7 +17,7 @@ from analysis import parse_tunnel_graph
 class TunnelGraph(object):
     def __init__(self, tunnel_log, throughput_graph=None, delay_graph=None,
                  ms_per_bin=500):
-        plt.use('Agg')
+        # plt.use('Agg')
         self.tunnel_log = tunnel_log
         self.throughput_graph = throughput_graph
         self.delay_graph = delay_graph
@@ -473,6 +476,12 @@ class TunnelGraph(object):
 
         return tunnel_results
 
+def run(args):
+    tg = TunnelGraph(tunnel_log=args.tunnel_log,
+        throughput_graph=args.throughput_graph,
+        delay_graph=args.delay_graph,
+        ms_per_bin=args.ms_per_bin)
+    tg.run()
 
 def main():
     args = parse_tunnel_graph()

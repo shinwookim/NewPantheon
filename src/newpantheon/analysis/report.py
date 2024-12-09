@@ -4,35 +4,40 @@ import numpy as np
 from fpdf import FPDF
 from os import path
 from newpantheon.helpers import utils
-from analysis import parse_report
+# from analysis import parse_report
 
 
 class PDF(FPDF):
     def __init__(self, args):
         super().__init__(orientation="P", unit="mm", format="A4")
         self.set_auto_page_break(auto=True, margin=15)
+        
         self.data_dir = path.abspath(args.data_dir)
         self.include_acklink = args.include_acklink
 
         metadata_path = path.join(args.data_dir, 'pantheon_metadata.json')
         self.meta = utils.load_test_metadata(metadata_path)
-        # self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, self.meta)
+        self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, self.meta)
 
         self.run_times = self.meta['run_times']
         self.flows = self.meta['flows']
         self.config = utils.parse_config()
 
+        self.add_page()
+        self.run()
+
     def header(self):
-        self.set_font("Arial", "B", 12)
-        self.cell(0, 10, "Pantheon Report", align="C", ln=True)
+        if self.page_no() == 1:
+            self.set_font("Times", "B", 24)
+            self.cell(0, 30, "Pantheon Report\n\n", align="C", ln=True)
 
     def footer(self):
         self.set_y(-15)
-        self.set_font("Arial", "I", 8)
-        self.cell(0, 10, f"Page {self.page_no()}", align="C")
+        self.set_font("Times", "I", 8)
+        self.cell(0, 5, f"Page {self.page_no()}", align="C")
 
     def describe_metadata(self):
-        self.multi_cell(0, 10, 'Generated at %s (UTC).\n\n' % utils.utc_time())
+        self.multi_cell(242, 10, f'Generated at {utils.utc_time()} (UTC).', align="L")
 
         meta = self.meta
 
@@ -48,7 +53,7 @@ class PDF(FPDF):
 
             mm_cmd = ' '.join(mm_cmd).replace('_', '\\_')
 
-            self.multi_cell(0, 10, f"Tested in mahimahi: {mm_cmd}\n\n")
+            self.multi_cell(0, 5, f"Tested in mahimahi: {mm_cmd}\n\n")
         elif meta['mode'] == 'remote':
             txt = {side: [] for side in ['local', 'remote']}
             for side in ['local', 'remote']:
@@ -59,9 +64,9 @@ class PDF(FPDF):
                 txt[side] = ' '.join(txt[side]).replace('_', '\\_')
 
             if meta['sender_side'] == 'remote':
-                self.multi_cell(0, 10, f"Data path: {txt['remote']} (remote) → {txt['local']} (local).\n\n")
+                self.multi_cell(0, 5, f"Data path: {txt['remote']} (remote) → {txt['local']} (local).\n\n")
             else:
-                self.multi_cell(0, 10, f"Data path: {txt['local']} (local) → {txt['remote']} (remote).\n\n")
+                self.multi_cell(0, 5, f"Data path: {txt['local']} (local) → {txt['remote']} (remote).\n\n")
 
         if meta['flows'] == 1:
             flows = '1 flow'
@@ -81,30 +86,33 @@ class PDF(FPDF):
         else:
             times = '{run_times} times'
 
-        self.multi_cell(0, 10, f"Repeated the test of {len(self.cc_schemes)} congestion control schemes {times}.\n")
-        self.multi_cell(0, 10, f"Each test lasted for {runtime} running {flows}.\n\n")
+        self.multi_cell(0, 5, f"Repeated the test of {len(self.cc_schemes)} congestion control schemes {times}.\n")
+        self.multi_cell(0, 5, f"Each test lasted for {runtime} running {flows}.\n\n")
 
         if 'ntp_addr' in meta:
-            self.multi_cell(0, 10, f"NTP offsets were measured against {meta['ntp_addr']} and applied to logs.\n\n")
+            self.multi_cell(0, 5, f"NTP offsets were measured against {meta['ntp_addr']} and applied to logs.\n\n")
 
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, "System info:", ln=True)
+        self.set_font('Times', 'B', 12)
+        self.cell(0, 5, "System info:", ln=True)
 
         self.set_font('Courier', '', 10)
-        self.multi_cell(0, 10, f"{utils.get_sys_info().decode('utf-8')}")
+        self.multi_cell(0, 5, f"{utils.get_sys_info()}")
         
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, "Git Summary:", ln=True)
+        self.ln(5)
+        
+        self.set_font('Times', 'B', 12)
+        self.cell(0, 5, "Git Summary:", ln=True)
 
         self.set_font('Courier', '', 10)
-        self.multi_cell(0, 10, meta['git_summary'])
+        self.multi_cell(0, 5, meta['git_summary'])
 
         # Add a page break
-        self.add_page()
+        # self.add_page()
 
     def create_table(self, data):
         self.add_page(orientation="L")
-        self.set_font("Arial", "B", 10)
+        self.ln(5)
+        self.set_font("Times", "B", 10)
 
         # Header Row
         header = ["Scheme", "# Runs"]
@@ -120,7 +128,7 @@ class PDF(FPDF):
         self.ln()
 
         # Data Rows
-        self.set_font("Arial", size=10)
+        self.set_font("Times", size=10)
         for cc in self.cc_schemes:
             flow_data = {data_t: [] for data_t in ['tput', 'delay', 'loss']}
             for data_t in ['tput', 'delay', 'loss']:
@@ -135,57 +143,7 @@ class PDF(FPDF):
                 self.cell(40, 10, flow_data['delay'][idx], border=1)
                 self.cell(40, 10, flow_data['loss'][idx], border=1)
             self.ln()
-
-        # align = ' c | c'
-        # for data_t in ['tput', 'delay', 'loss']:
-        #     align += ' | ' + ' '.join(['Y' for _ in range(self.flows)])
-        # align += ' '
-
-        # flow_cols = ' & '.join(
-        #     ['flow %d' % flow_id for flow_id in range(1, 1 + self.flows)])
-
-        # table_width = 0.9 if self.flows == 1 else ''
-        # table = (
-        #     '\\begin{landscape}\n'
-        #     '\\centering\n'
-        #     '\\begin{tabularx}{%(width)s\linewidth}{%(align)s}\n'
-        #     '& & \\multicolumn{%(flows)d}{c|}{mean avg tput (Mbit/s)}'
-        #     ' & \\multicolumn{%(flows)d}{c|}{mean 95th-\\%%ile delay (ms)}'
-        #     ' & \\multicolumn{%(flows)d}{c}{mean loss rate (\\%%)} \\\\\n'
-        #     'scheme & \\# runs & %(flow_cols)s & %(flow_cols)s & %(flow_cols)s'
-        #     ' \\\\\n'
-        #     '\\hline\n'
-        # ) % {'width': table_width,
-        #      'align': align,
-        #      'flows': self.flows,
-        #      'flow_cols': flow_cols}
-
-        # for cc in self.cc_schemes:
-        #     flow_data = {}
-        #     for data_t in ['tput', 'delay', 'loss']:
-        #         flow_data[data_t] = []
-        #         for flow_id in range(1, self.flows + 1):
-        #             if data[cc][flow_id][data_t]:
-        #                 mean_value = np.mean(data[cc][flow_id][data_t])
-        #                 flow_data[data_t].append('%.2f' % mean_value)
-        #             else:
-        #                 flow_data[data_t].append('N/A')
-
-        #     table += (
-        #         '%(name)s & %(valid_runs)s & %(flow_tputs)s & '
-        #         '%(flow_delays)s & %(flow_losses)s \\\\\n'
-        #     ) % {'name': data[cc]['name'],
-        #          'valid_runs': data[cc]['valid_runs'],
-        #          'flow_tputs': ' & '.join(flow_data['tput']),
-        #          'flow_delays': ' & '.join(flow_data['delay']),
-        #          'flow_losses': ' & '.join(flow_data['loss'])}
-
-        # table += (
-        #     '\\end{tabularx}\n'
-        #     '\\end{landscape}\n\n'
-        # )
-
-        # return table
+            self.add_page()
 
     def summary_table(self):
         data = {}
@@ -255,41 +213,33 @@ class PDF(FPDF):
                 if valid_run:
                     data[cc]['valid_runs'] += 1
 
-        return self.create_table(data)
-    
-    def add_figure(self, figure_path):
-        """Add a figure to the PDF if it exists, otherwise add a placeholder."""
-        if path.isfile(figure_path):
-            self.image(figure_path, w=self.w - 20)  # Adjust width with padding
-        else:
-            self.set_font("Arial", size=12, style='B')
-            self.cell(0, 10, "Figure is missing", align="C")
-        self.ln(10)  # Add some space after the figure
+        self.create_table(data)
 
     def include_summary(self):
-        self.set_font("Arial", size=12)
+        self.set_font("Times", size=12)
 
-        raw_summary = path.join(self.data_dir, 'pantheon_summary.pdf')
-        mean_summary = path.join(self.data_dir, 'pantheon_summary_mean.pdf')
+        raw_summary = path.join(self.data_dir, 'pantheon_summary.png')
+        mean_summary = path.join(self.data_dir, 'pantheon_summary_mean.png')
 
-        metadata_desc = self.describe_metadata()
-        self.multi_cell(0, 10, metadata_desc)
-        self.ln(10)  # Add some space
+        self.describe_metadata()
+        self.include_runs()
         self.summary_table()
 
         if path.isfile(raw_summary):
-            self.image(raw_summary, w=self.w - 20)  # Adjust width with padding
+            self.image(raw_summary, x=30, y=self.get_y(), h=137)  # Adjust width with padding
+            self.ln(135)
         else:
-            self.cell(0, 10, "Figure is missing", align="C")
-        self.ln(10)  # Add some space after the figure
+            self.cell(0, 5, "Figure is missing", align="C")
+            self.ln(10)  # Add some space after the figure
 
         if path.isfile(mean_summary):
-            self.image(mean_summary, w=self.w - 20)  # Adjust width with padding
+            self.image(mean_summary, x=30, y=self.get_y(), h=130)  # Adjust width with padding
         else:
-            self.cell(0, 10, "Figure is missing", align="C")
-        self.ln(10)  # Add some space after the figure
+            self.cell(0, 5, "Figure is missing", align="C")
+            self.ln(10)  # Add some space after the figure
 
     def include_runs(self):
+        # self.add_page()
         cc_id = 0
         for cc in self.cc_schemes:
             cc_id += 1
@@ -307,20 +257,17 @@ class PDF(FPDF):
 
                 # Add a new page for each run
                 self.add_page()
-
                 # Write statistics information
-                self.set_font("Arial", style="B", size=12)
-                self.cell(0, 10, f"Run {run_id}: Statistics of {cc_name}", ln=True)
+                self.set_font("Times", style="B", size=12)
                 self.ln(5)
-
+                self.cell(0, 5, f"Run {run_id}: Statistics of {cc_name}", ln=True)
                 self.set_font("Courier", size=10)
-                self.multi_cell(0, 10, stats_info)
-                self.ln(5)
-
+                self.multi_cell(0, 5, stats_info)
                 # Add graphs for Data Link
-                self.set_font("Arial", style="B", size=12)
-                self.cell(0, 10, f"Run {run_id}: Report of {cc_name} --- Data Link", ln=True)
+                self.add_page()
+                self.set_font("Times", style="B", size=12)
                 self.ln(5)
+                self.cell(0, 5, f"Run {run_id}: Report of {cc_name} --- Data Link", ln=True)
 
                 link_directions = ['datalink']
                 if self.include_acklink:
@@ -331,21 +278,20 @@ class PDF(FPDF):
                         graph_path = path.join(
                             self.data_dir, f"{cc}_{link_t}_{metric_t}_run{run_id}.png"
                         )
-
                         if path.isfile(graph_path):
                             self.image(graph_path, x=10, y=self.get_y(), w=190)
-                            self.ln(70)  # Adjust the spacing based on the image size
+                            self.ln(120)  # Adjust the spacing based on the image size
                         else:
-                            self.set_font("Arial", style="I", size=10)
-                            self.cell(0, 10, f"Missing: {graph_path}", ln=True)
+                            self.set_font("Times", style="I", size=10)
+                            self.cell(0, 5, f"Missing: {graph_path}", ln=True)
                             self.ln(5)
 
-                    self.ln(5)
+                    # self.ln(5)
 
                 # Add graphs for ACK Link (if enabled)
                 if self.include_acklink:
-                    self.set_font("Arial", style="B", size=12)
-                    self.cell(0, 10, f"Run {run_id}: Report of {cc_name} --- ACK Link", ln=True)
+                    self.set_font("Times", style="B", size=12)
+                    self.cell(0, 5, f"Run {run_id}: Report of {cc_name} --- ACK Link", ln=True)
                     self.ln(5)
 
                     for metric_t in ['throughput', 'delay']:
@@ -357,19 +303,19 @@ class PDF(FPDF):
                             self.image(graph_path, x=10, y=self.get_y(), w=190)
                             self.ln(70)  # Adjust the spacing based on the image size
                         else:
-                            self.set_font("Arial", style="I", size=10)
-                            self.cell(0, 10, f"Missing: {graph_path}", ln=True)
+                            self.set_font("Times", style="I", size=10)
+                            self.cell(0, 5, f"Missing: {graph_path}", ln=True)
                             self.ln(5)
 
     def run(self):
-        report_uid = uuid.uuid4()
-        pdf_path = path.join(self.data_dir, f"pantheon_report_{report_uid}.pdf")
+        pdf_path = path.join(self.data_dir, f"pantheon_report_{utils.utc_time()}.pdf")
         self.include_summary()
-        self.include_runs()
         self.output(pdf_path)
         
         print(f"Saved pantheon_report.pdf in {self.data_dir}")
 
+def run(args):
+    PDF(args)
 
 def main():
     args = parse_report()

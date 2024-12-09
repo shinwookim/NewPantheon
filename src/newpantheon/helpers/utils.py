@@ -1,5 +1,6 @@
 import os
 from os import path
+import platform
 import sys
 import socket
 import signal
@@ -9,8 +10,7 @@ import yaml
 import subprocess
 from datetime import datetime
 
-from helpers import context, subprocess_wrappers.check_call, subprocess_wrappers.check_output, subprocess_wrappers.call
-
+from helpers import context, subprocess_wrappers
 
 def get_open_port():
     sock = socket.socket(socket.AF_INET)
@@ -36,12 +36,12 @@ make_sure_dir_exists(tmp_dir)
 
 def parse_config():
     with open(path.join(context.src_dir, 'config.yml')) as config:
-        return yaml.load(config)
+        return yaml.load(config, Loader=yaml.Loader)
 
 
 def update_submodules():
     cmd = 'git submodule update --init --recursive'
-    check_call(cmd, shell=True)
+    subprocess_wrappers.subprocess_wrappers.check_call(cmd, shell=True)
 
 
 class TimeoutError(Exception):
@@ -71,7 +71,7 @@ def kill_proc_group(proc, signum=signal.SIGTERM):
 def apply_patch(patch_name, repo_dir):
     patch = path.join(context.src_dir, 'wrappers', 'patches', patch_name)
 
-    if call(['git', 'apply', patch], cwd=repo_dir) != 0:
+    if subprocess_wrappers.call(['git', 'apply', patch], cwd=repo_dir) != 0:
         sys.stderr.write('patch apply failed but assuming things okay '
                          '(patch applied previously?)\n')
 
@@ -104,7 +104,7 @@ def who_runs_first(cc):
     cc_src = path.join(context.src_dir, 'wrappers', cc + '.py')
 
     cmd = [cc_src, 'run_first']
-    run_first = check_output(cmd).strip()
+    run_first = subprocess_wrappers.check_output(cmd).strip()
 
     if run_first == 'receiver':
         run_second = 'sender'
@@ -149,7 +149,7 @@ def query_clock_offset(ntp_addr, ssh_cmd):
         fail = True
         for _ in range(3):
             try:
-                offset = check_output(cmd)
+                offset = subprocess_wrappers.check_output(cmd)
                 sys.stderr.write(offset)
 
                 offset = offset.rsplit(' ', 2)[-2]
@@ -176,7 +176,7 @@ def query_clock_offset(ntp_addr, ssh_cmd):
 def get_git_summary(mode='local', remote_path=None):
     git_summary_src = path.join(context.src_dir, 'experiments',
                                 'git_summary.sh')
-    local_git_summary = check_output(git_summary_src, cwd=context.base_dir)
+    local_git_summary = subprocess_wrappers.check_output(git_summary_src, cwd=context.base_dir)
 
     if mode == 'remote':
         r = parse_remote_path(remote_path)
@@ -186,7 +186,7 @@ def get_git_summary(mode='local', remote_path=None):
         ssh_cmd = 'cd %s; %s' % (r['base_dir'], git_summary_src)
         ssh_cmd = ' '.join(r['ssh_cmd']) + ' "%s"' % ssh_cmd
 
-        remote_git_summary = check_output(ssh_cmd, shell=True)
+        remote_git_summary = subprocess_wrappers.check_output(ssh_cmd, shell=True)
 
         if local_git_summary != remote_git_summary:
             sys.stderr.write(
@@ -221,12 +221,22 @@ def save_test_metadata(meta, metadata_path):
 
 def get_sys_info():
     sys_info = ''
-    sys_info += check_output(['uname', '-sr'])
-    sys_info += check_output(['sysctl', 'net.core.default_qdisc'])
-    sys_info += check_output(['sysctl', 'net.core.rmem_default'])
-    sys_info += check_output(['sysctl', 'net.core.rmem_max'])
-    sys_info += check_output(['sysctl', 'net.core.wmem_default'])
-    sys_info += check_output(['sysctl', 'net.core.wmem_max'])
-    sys_info += check_output(['sysctl', 'net.ipv4.tcp_rmem'])
-    sys_info += check_output(['sysctl', 'net.ipv4.tcp_wmem'])
+    
+    # Check the system type
+    if platform.system() == 'Darwin':  # macOS
+        sys_info += subprocess.check_output(['uname', '-sr']).decode("utf-8")
+        sys_info += "macOS does not support 'net.core.default_qdisc'\n"
+    else:  # Linux
+        try:
+            sys_info += subprocess.check_output(['sysctl', 'net.core.default_qdisc']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.core.rmem_default']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.core.rmem_max']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.core.wmem_default']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.core.wmem_max']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.ipv4.tcp_rmem']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.ipv4.tcp_wmem']).decode("utf-8")
+        except subprocess.CalledProcessError as e:
+            print(f"Error running sysctl command: {e}")
+            sys_info += "Error: Unable to retrieve sysctl information\n"
+    
     return sys_info

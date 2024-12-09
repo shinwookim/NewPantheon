@@ -4,25 +4,27 @@ import sys
 from os import path
 import math
 import time
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+matplotlib.use('Agg')
 
 # import arg_parser
 # import context
-from analysis import parse_over_time
+# from analysis import parse_over_time
 from newpantheon.helpers import utils
 
 
 class PlotThroughputTime(object):
     def __init__(self, args):
-        plt.use('Agg')
+        # plt.use('Agg')
         self.data_dir = path.abspath(args.data_dir)
         self.ms_per_bin = args.ms_per_bin
         self.amplify = args.amplify
 
         metadata_path = path.join(self.data_dir, 'pantheon_metadata.json')
         meta = utils.load_test_metadata(metadata_path)
-        # self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+        self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
 
         self.run_times = meta['run_times']
         self.flows = meta['flows']
@@ -156,7 +158,7 @@ class PlotThroughputTime(object):
         ax.set_xlabel('Time (s) since ' + start_datetime, fontsize=12)
         ax.set_ylabel('Throughput (Mbit/s)', fontsize=12)
 
-        for graph_format in ['svg', 'pdf']:
+        for graph_format in ['svg', 'pdf', 'png']:
             fig_path = path.join(
                 self.data_dir, 'pantheon_throughput_time.%s' % graph_format)
             fig.savefig(fig_path, bbox_inches='tight', pad_inches=0.2)
@@ -166,6 +168,9 @@ class PlotThroughputTime(object):
 
         plt.close('all')
 
+def run(args):
+    plot = PlotThroughputTime(args)
+    plot.run()
 
 def main():
     args = parse_over_time()

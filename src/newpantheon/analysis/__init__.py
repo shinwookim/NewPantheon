@@ -1,3 +1,5 @@
+import ast
+import json
 from os import path
 
 from newpantheon.common import context
@@ -62,7 +64,7 @@ def parse_report(subparser):
         action='store', dest='delay_graph',
         help='delay graph to save as (default None)') 
     subparser.add_argument(
-        '--schemes', metavar='"SCHEME1 SCHEME2..."',
+        '--schemes', metavar='"SCHEME1 SCHEME2..."', default=None, 
         help='analyze a space-separated list of schemes '
         '(default: "cc_schemes" in pantheon_metadata.json)')
     subparser.add_argument(
@@ -123,6 +125,19 @@ def run(args):
             cmd += ['--schemes', args.schemes]
         if args.include_acklink:
             cmd += ['--include-acklink']
+
+    
+    if args.schemes is None:
+        file_path = args.data_dir + "/pantheon_metadata.json"
+        with open(file_path, 'r') as f:
+            # Load the JSON data into a Python dictionary
+            data = json.load(f)
+        # print(type(dict_keys(data["cc_schemes"])), list(data["cc_schemes"]))
+        schemes_str = data["cc_schemes"]
+        schemes_str = schemes_str[schemes_str.find("[")+1:schemes_str.find("]")]
+        args.schemes = " ".join(ast.literal_eval(schemes_str))
+        
+    print("Schemes", args.schemes)
 
     plot.run(args)
     plot_over_time.run(args)

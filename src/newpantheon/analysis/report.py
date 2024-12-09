@@ -143,7 +143,8 @@ class PDF(FPDF):
                 self.cell(40, 10, flow_data['delay'][idx], border=1)
                 self.cell(40, 10, flow_data['loss'][idx], border=1)
             self.ln()
-            self.add_page()
+            
+        self.add_page()
 
     def summary_table(self):
         data = {}

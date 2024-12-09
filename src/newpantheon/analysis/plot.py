@@ -13,12 +13,9 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 matplotlib.use('Agg')
 
-# import arg_parser
-# import tunnel_graph
-# import context
+
 from newpantheon.helpers import utils
 from newpantheon.analysis import tunnel_graph
-# from analysis import parse_plot, tunnel_graph
 
 
 class Plot(object):
@@ -351,11 +348,3 @@ class Plot(object):
 def run(args):
     plot = Plot(args)
     plot.run()
-
-def main():
-    args = parse_plot()
-    Plot(args).run()
-
-
-if __name__ == '__main__':
-    main()

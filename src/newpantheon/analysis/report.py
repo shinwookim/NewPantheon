@@ -4,7 +4,6 @@ import numpy as np
 from fpdf import FPDF
 from os import path
 from newpantheon.helpers import utils
-# from analysis import parse_report
 
 
 class PDF(FPDF):
@@ -337,11 +336,3 @@ class PDF(FPDF):
 
 def run(args):
     PDF(args)
-
-def main():
-    args = parse_report()
-    PDF(args)
-
-
-if __name__ == '__main__':
-    main()

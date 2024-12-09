@@ -9,9 +9,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 matplotlib.use('Agg')
 
-# import arg_parser
-# import context
-# from analysis import parse_over_time
 from newpantheon.helpers import utils
 
 
@@ -178,11 +175,3 @@ class PlotThroughputTime(object):
 def run(args):
     plot = PlotThroughputTime(args)
     plot.run()
-
-def main():
-    args = parse_over_time()
-    PlotThroughputTime(args).run()
-
-
-if __name__ == '__main__':
-    main()

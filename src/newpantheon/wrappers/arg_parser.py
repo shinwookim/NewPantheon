@@ -1,7 +1,6 @@
 import argparse
 import sys
 
-
 def parse_wrapper_args(run_first):
     if run_first != 'receiver' and run_first != 'sender':
         sys.exit('Specify "receiver" or "sender" to run first')

@@ -19,7 +19,7 @@ class PDF(FPDF):
         self.meta = utils.load_test_metadata(metadata_path)
         self.interactions = args.interactions
         if not self.interactions:
-            self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+            self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, self.meta)
         else:
             self.cc_schemes = [args.schemes.replace(" ", "-")]
 
@@ -123,15 +123,16 @@ class PDF(FPDF):
         for _ in range(self.flows):
             header.extend([f"Flow {_+1} Tput", f"Flow {_+1} Delay", f"Flow {_+1} Loss"])
         self.set_fill_color(200, 200, 200)
-        self.cell(40, 10, "Scheme", border=1, fill=True)
-        self.cell(20, 10, "# Runs", border=1, fill=True)
+        self.cell(20, 10, "Scheme", border=1, fill=True)
+        self.cell(15, 10, "# Runs", border=1, fill=True)
         for _ in range(self.flows):
-            self.cell(40, 10, f"Flow {_+1} Tput", border=1, fill=True)
-            self.cell(40, 10, f"Flow {_+1} Delay", border=1, fill=True)
-            self.cell(40, 10, f"Flow {_+1} Loss", border=1, fill=True)
+            self.cell(30, 10, f"Flow {_+1} Tput", border=1, fill=True)
+            self.cell(30, 10, f"Flow {_+1} Delay", border=1, fill=True)
+            self.cell(30, 10, f"Flow {_+1} Loss", border=1, fill=True)
         self.ln()
 
         # Data Rows
+        print(data)
         self.set_font("Times", size=10)
         for cc in self.cc_schemes:
             flow_data = {data_t: [] for data_t in ['tput', 'delay', 'loss']}
@@ -140,13 +141,12 @@ class PDF(FPDF):
                     mean_value = np.mean(data[cc][flow_id][data_t]) if data[cc][flow_id][data_t] else "N/A"
                     flow_data[data_t].append(f"{mean_value:.2f}" if isinstance(mean_value, float) else mean_value)
 
-            print("In report",cc)
-            self.cell(40, 10, data[cc]['name'], border=1)
-            self.cell(20, 10, str(data[cc]['valid_runs']), border=1)
+            self.cell(20, 10, data[cc]['name'], border=1)
+            self.cell(15, 10, str(data[cc]['valid_runs']), border=1)
             for idx in range(self.flows):
-                self.cell(40, 10, flow_data['tput'][idx], border=1)
-                self.cell(40, 10, flow_data['delay'][idx], border=1)
-                self.cell(40, 10, flow_data['loss'][idx], border=1)
+                self.cell(30, 10, flow_data['tput'][idx], border=1)
+                self.cell(30, 10, flow_data['delay'][idx], border=1)
+                self.cell(30, 10, flow_data['loss'][idx], border=1)
             self.ln()
             
         self.add_page()
@@ -155,6 +155,7 @@ class PDF(FPDF):
         data = {}
 
         re_tput = lambda x: re.match(r'Average throughput: (.*?) Mbit/s', x)
+        re_flow = lambda x: re.match(r'-- Flow (\d+):', x)
         re_delay = lambda x: re.match(
             r'95th percentile per-packet one-way delay: (.*?) ms', x)
         re_loss = lambda x: re.match(r'Loss rate: (.*?)%', x)
@@ -189,17 +190,25 @@ class PDF(FPDF):
                 valid_run = False
                 flow_id = 1
 
+                print(stats_log_path)
                 while True:
                     line = stats_log.readline()
+                    # print(line)
                     if not line:
                         break
 
                     if 'Datalink statistics' in line:
                         valid_run = True
                         continue
-
-                    if 'Flow %d' % flow_id in line:
-                        ret = re_tput(stats_log.readline())
+                    match = re_flow(line)
+                    if match:
+                        print(line)
+                        flow_id = int(re.search(r'\d+', line).group())
+                        if flow_id > self.flows:
+                            continue
+                        l = stats_log.readline()
+                        ret = re_tput(l)
+                        print("LINE", l)
                         if ret:
                             ret = float(ret.group(1))
                             data[cc][flow_id]['tput'].append(ret)
@@ -214,7 +223,7 @@ class PDF(FPDF):
                             ret = float(ret.group(1))
                             data[cc][flow_id]['loss'].append(ret)
 
-                        if flow_id < self.flows:
+                        if flow_id <= self.flows:
                             flow_id += 1
 
                 stats_log.close()

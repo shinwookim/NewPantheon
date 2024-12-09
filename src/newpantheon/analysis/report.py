@@ -4,7 +4,6 @@ import numpy as np
 from fpdf import FPDF
 from os import path
 from newpantheon.helpers import utils
-# from analysis import parse_report
 
 
 class PDF(FPDF):

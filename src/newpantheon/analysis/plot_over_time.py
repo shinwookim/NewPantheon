@@ -24,7 +24,11 @@ class PlotThroughputTime(object):
 
         metadata_path = path.join(self.data_dir, 'pantheon_metadata.json')
         meta = utils.load_test_metadata(metadata_path)
-        self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+        self.interactions = args.interactions
+        if not self.interactions:
+            self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+        else:
+            self.cc_schemes = [args.schemes.replace(" ", "-")]
 
         self.run_times = meta['run_times']
         self.flows = meta['flows']
@@ -111,7 +115,10 @@ class PlotThroughputTime(object):
 
         schemes_config = utils.parse_config()['schemes']
         for cc in self.cc_schemes:
-            cc_name = schemes_config[cc]['name']
+            if self.interactions:
+                cc_name = self.cc_schemes
+            else:
+                cc_name = schemes_config[cc]['name']
 
             for run_id in range(1, self.run_times + 1):
                 tunnel_log_path = path.join(

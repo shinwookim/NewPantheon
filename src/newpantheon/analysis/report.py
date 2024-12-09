@@ -17,7 +17,11 @@ class PDF(FPDF):
 
         metadata_path = path.join(args.data_dir, 'pantheon_metadata.json')
         self.meta = utils.load_test_metadata(metadata_path)
-        self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, self.meta)
+        self.interactions = args.interactions
+        if not self.interactions:
+            self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+        else:
+            self.cc_schemes = [args.schemes.replace(" ", "-")]
 
         self.run_times = self.meta['run_times']
         self.flows = self.meta['flows']
@@ -136,6 +140,7 @@ class PDF(FPDF):
                     mean_value = np.mean(data[cc][flow_id][data_t]) if data[cc][flow_id][data_t] else "N/A"
                     flow_data[data_t].append(f"{mean_value:.2f}" if isinstance(mean_value, float) else mean_value)
 
+            print("In report",cc)
             self.cell(40, 10, data[cc]['name'], border=1)
             self.cell(20, 10, str(data[cc]['valid_runs']), border=1)
             for idx in range(self.flows):
@@ -158,8 +163,11 @@ class PDF(FPDF):
             data[cc] = {}
             data[cc]['valid_runs'] = 0
 
-            cc_name = self.config['schemes'][cc]['name']
-            cc_name = cc_name.strip().replace('_', '\\_')
+            if self.interactions:
+                cc_name = self.cc_schemes[0]
+            else:
+                cc_name = self.config['schemes'][cc]['name']
+                cc_name = cc_name.strip().replace('_', '\\_')
             data[cc]['name'] = cc_name
 
             for flow_id in range(1, self.flows + 1):
@@ -244,7 +252,10 @@ class PDF(FPDF):
         cc_id = 0
         for cc in self.cc_schemes:
             cc_id += 1
-            cc_name = self.config['schemes'][cc]['name'].strip().replace('_', ' ')
+            if self.interactions:
+                cc_name = self.cc_schemes
+            else:
+                cc_name = self.config['schemes'][cc]['name'].strip().replace('_', ' ')
 
             for run_id in range(1, 1 + self.run_times):
                 fname = f"{cc}_stats_run{run_id}.log"

@@ -53,6 +53,9 @@ def parse_report(subparser):
     # parse_tunnel_graph(subparser)
     subparser.add_argument('--include-acklink', action='store_true',
                         help='include acklink analysis')
+    subparser.add_argument(
+        '--interactions', action='store_true', 
+        help='analyze the interactions between ccs')
     # subparser.add_argument('tunnel_log', metavar='tunnel-log',
                         # help='tunnel log file')
     subparser.add_argument(
@@ -100,17 +103,6 @@ def parse_analyze(subparser):
     
 def setup_args(subparsers):
     parser_analysis = subparsers.add_parser("analysis", help="Run Analysis")
-    
-    # Define nested subcommands for 'analysis'
-    # analysis_subparsers = parser_analysis.add_subparsers(
-    #     dest="analysis_command", required=True
-    # )
-
-    # parse_tunnel_graph(analysis_subparsers.add_parser(
-    #     'tunnel-graph', help='Evaluate throughput and delay of a tunnel log and generate graphs'))
-    # parse_plot(analysis_subparsers.add_parser('plot', help='Plot throughput and delay graphs for schemes in tests'))
-    # parse_report(analysis_subparsers.add_parser('report', help='Generate a PDF report summarizing test results'))
-    # parse_over_time(analysis_subparsers.add_parser('over-time', help='Plot throughput-time graph for schemes in tests'))
     parse_report(parser_analysis)
 
 def run(args):
@@ -132,25 +124,11 @@ def run(args):
         with open(file_path, 'r') as f:
             # Load the JSON data into a Python dictionary
             data = json.load(f)
-        # print(type(dict_keys(data["cc_schemes"])), list(data["cc_schemes"]))
         schemes_str = data["cc_schemes"]
         schemes_str = schemes_str[schemes_str.find("[")+1:schemes_str.find("]")]
         args.schemes = " ".join(ast.literal_eval(schemes_str))
-        
-    print("Schemes", args.schemes)
 
     plot.run(args)
     plot_over_time.run(args)
     # tunnel_graph.run(args)
     report.run(args)
-    # match args.analysis_command:
-    #     case "report":
-    #         report.run(args)
-    #     case "plot":
-    #         plot.run(args)
-    #     case "over-time":
-    #         plot_over_time.run()
-    #     case "tunnel-graph":
-    #         tunnel_graph.run()
-    #     case "default":
-    #         print("[Pantheon Analysis] Unknown command.")

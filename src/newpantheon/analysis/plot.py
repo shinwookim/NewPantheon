@@ -30,7 +30,13 @@ class Plot(object):
 
         metadata_path = path.join(self.data_dir, 'pantheon_metadata.json')
         meta = utils.load_test_metadata(metadata_path)
-        self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+        self.interactions = args.interactions
+        if not self.interactions:
+            self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+        else:
+            self.cc_schemes = [args.schemes.replace(" ", "-")]
+        # print(self.cc_schemes)
+        # self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
 
         self.run_times = meta['run_times']
         self.flows = meta['flows']
@@ -162,6 +168,7 @@ class Plot(object):
 
         while cc_id < len(self.cc_schemes):
             cc = self.cc_schemes[cc_id]
+            print("In plot", cc)
             perf_data[cc][run_id] = pool.apply_async(
                 self.parse_tunnel_log, args=(cc, run_id))
 
@@ -235,10 +242,15 @@ class Plot(object):
             if not value:
                 sys.stderr.write(f"No performance data for scheme {cc}\n")
                 continue
-
-            cc_name = schemes_config[cc]['name']
-            color = schemes_config[cc]['color']
-            marker = schemes_config[cc]['marker']
+            
+            if self.interactions:
+                cc_name = self.cc_schemes
+                color = 'blue'
+                marker = '*'
+            else:
+                cc_name = schemes_config[cc]['name']
+                color = schemes_config[cc]['color']
+                marker = schemes_config[cc]['marker']
             y_data, x_data = zip(*value)
 
             # update min and max raw delay

@@ -15,7 +15,7 @@ def run_test(args):
     # check and get git summary
     if args.config_file is not None:
         config = parse_config_file(args.config_file)
-        cc_schemes = config["schemes"].keys()
+        cc_schemes = [flow['scheme'] for flow in config['flows']]
     elif args.all:
         config = parse_config_file(default_config_location)
         cc_schemes = config["schemes"].keys()

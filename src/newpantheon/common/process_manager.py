@@ -7,8 +7,10 @@ import os
 import subprocess
 import sys
 from signal import SIGTERM
-
+import select
+import time
 from .logger import log_print
+import re
 
 
 def print_cmd(cmd) -> None:
@@ -54,10 +56,18 @@ def write_stdin(proc, msg) -> None:
     proc.stdin.flush()
 
 
-def read_stdout(proc) -> str:
+def read_stdout(proc, nul_term=None) -> str:
     """Read from process proc's standard output"""
-    return proc.stdout.readline().decode(sys.stdout.encoding)
-
+    read_line = proc.stdout.readline().decode(sys.stdout.encoding)
+    stdout = [read_line]
+    if nul_term is not None:
+        while read_line[-2] != nul_term:
+            read_line = proc.stdout.readline().decode(sys.stdout.encoding)
+            stdout.append(re.sub(r"#", '', read_line))
+        read_line = re.sub(r"#", '', read_line)
+        return " ".join(stdout)
+    else:
+        return re.sub(r"#", '', read_line)
 
 def kill_proc_group(proc, signum=SIGTERM) -> None:
     """Kill all processes in the same group as proc by sending a signal"""

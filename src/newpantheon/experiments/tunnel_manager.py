@@ -91,10 +91,14 @@ class TunnelManager:
 
     def _handle_readline_command(self, tunnel_id: int):
         """Read output from tunnel."""
-        if tunnel_id not in self.processes:
-            log_print("error: run tunnel client or server first")
-            return
-        print(read_stdout(self.processes[tunnel_id]), flush=True)
+        # if tunnel_id not in self.processes:
+        #     log_print("error: run tunnel client or server first")
+        #     return
+        output = read_stdout(self.processes[tunnel_id])
+        print(f"{output}#", flush=True)
+        sys.stdout.flush() 
+        log_print(f"[Tunnel Manager {self.prompt} readline] {output}")
+        
 
     def handle_prompt_command(self, args: List[str]) -> None:
         if len(args) != 1:
@@ -115,7 +119,7 @@ class TunnelManager:
         while True:
             try:
                 input_line = sys.stdin.readline().strip()
-                log_print(f"[Tunnel Manager] Got Input: {input_line}")
+                log_print(f"[Tunnel Manager {self.prompt}] Got Input: {input_line}")
                 command = self.parse_command(input_line)
                 handlers = {
                     CommandType.TUNNEL: lambda: self.handle_tunnel_command(

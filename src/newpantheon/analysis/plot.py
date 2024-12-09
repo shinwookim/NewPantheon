@@ -216,7 +216,7 @@ class Plot(object):
                 symlog = True
 
         if symlog:
-            ax.set_xscale('symlog', basex=2, linthreshx=2, linscalex=0.5)
+            ax.set_xscale('symlog', base=2, linthresh=2, linscale=0.5)
             ax.set_xlim(x_min, x_max)
             ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
 

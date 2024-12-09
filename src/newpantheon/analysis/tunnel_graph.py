@@ -6,7 +6,9 @@ import itertools
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from analysis import parse_tunnel_graph
+
+matplotlib.use('Agg')
+# from analysis import parse_tunnel_graph
 
 matplotlib.use('Agg')
 # from analysis import parse_tunnel_graph

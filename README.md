@@ -16,7 +16,18 @@ This creates a new environment with all of the dependencies specified in the [py
 ```
 hatch shell dev
 ```
+## Experiments
 
+[To be filled in]
+
+## Analysis
+
+To run analysis, use the following command:
+```
+python src/newpantheon/__main__.py analysis --data-dir DIR
+```
+
+(--data-dir is optional, the default is /src/tmp)
 
 ## Acknowledgements
 

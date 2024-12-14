@@ -27,7 +27,7 @@ To run analysis, use the following command:
 python src/newpantheon/__main__.py analysis --data-dir DIR
 ```
 
-(--data-dir is optional, the default is /src/tmp)
+(--data-dir is optional, the default is src/tmp)
 
 ## Acknowledgements
 

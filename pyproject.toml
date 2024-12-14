@@ -37,6 +37,9 @@ dev = [
     "pytest",
     "pytest-cov",
     "pre-commit",
+    "fpdf",
+    "matplotlib",
+    "numpy",
 ]
 
 [tool.hatch.version]

@@ -107,7 +107,6 @@ def run(args):
             data = json.load(f)
         print(context.src_dir)
         schemes_str = ast.literal_eval(data["cc_schemes"])
-        # schemes_str = schemes_str[schemes_str.find("[")+1:schemes_str.find("]")]
         args.schemes = " ".join(schemes_str)
         if "test-name" in data:
             args.test_name = data["test-name"]

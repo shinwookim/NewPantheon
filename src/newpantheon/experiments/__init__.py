@@ -273,7 +273,6 @@ def setup_args(subparsers, parser):
     else:
         args.config_file = None
 
-    print(args)
     if args.command == "experiment":
         verify_test_args(args)
         utils.make_sure_dir_exists(args.data_dir)
@@ -281,7 +280,6 @@ def setup_args(subparsers, parser):
 
 
 def run(args):
-    # print(args)
     match args.experiment_command:
         case "test":
             run_test(args)

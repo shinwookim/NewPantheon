@@ -98,8 +98,6 @@ def setup_args(subparsers):
     parse_report(parser_analysis)
 
 def run(args):
-    print(args)
-    
     if args.schemes is None:
         file_path = args.data_dir + "/pantheon_metadata.json"
         with open(file_path, 'r') as f:

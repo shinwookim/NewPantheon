@@ -1,4 +1,5 @@
 import argparse
+from os import path
 import sys
 import yaml
 
@@ -55,7 +56,7 @@ def parse_test_shared(parser):
     parser.add_argument(
         "--data-dir",
         metavar="DIR",
-        default=str(Path(context.src_dir) / "experiments" / "data"),  # TODO: Change
+        default=path.abspath(path.join(path.dirname( __file__ ), '..', '..', 'tmp')),  # TODO: Change
         help="directory to save all test logs, graphs, "
         "metadata, and report (default pantheon/src/experiments/data)",
     )

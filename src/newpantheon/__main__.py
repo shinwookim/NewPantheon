@@ -3,7 +3,7 @@
 """Main Entry Point for Pantheon"""
 
 import argparse
-from newpantheon import experiments
+from newpantheon import experiments, analysis
 
 
 def parse_app_args():
@@ -17,12 +17,12 @@ def parse_app_args():
         dest="command", required=True, help="Main commands"
     )
 
-    parser_analysis = subparsers.add_parser("analysis", help="Run analysis")
-
-    args = experiments.setup_args(subparsers, parser)
+    # parser_analysis = subparsers.add_parser("analysis", help="Run analysis")
+    analysis.setup_args(subparsers)
+    # args = experiments.setup_args(subparsers, parser)
 
     # Parse arguments
-    # args = parser.parse_args()
+    args = parser.parse_args()
     return args
 
 
@@ -31,6 +31,7 @@ def main():
     parsed_args = parse_app_args()
     command_map = {
         "experiment": experiments.run,
+        "analysis": analysis.run,
     }
     command_map[parsed_args.command](parsed_args)
 

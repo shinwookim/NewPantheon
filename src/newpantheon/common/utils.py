@@ -1,6 +1,8 @@
 """Various utility functions used throughout Pantheon"""
 
 from datetime import datetime, timezone
+import json
+import platform
 import subprocess
 import sys
 import socket
@@ -9,6 +11,8 @@ import errno
 from os import path
 from tempfile import NamedTemporaryFile
 from pathlib import Path
+
+import yaml
 
 from . import context
 
@@ -106,3 +110,51 @@ def parse_remote_path(remote_path, cc=None):
     if cc is not None:
         ret["cc_src"] = path.join(ret["src_dir"], "newpantheon", "wrappers", f"{cc}.py")
     return ret
+
+def load_test_metadata(metadata_path):
+    with open(metadata_path) as metadata:
+        return json.load(metadata)
+    
+def parse_config():
+    with open(path.join(context.src_dir, 'config.yml')) as config:
+        return yaml.load(config, Loader=yaml.Loader)
+    
+def verify_schemes_with_meta(schemes, meta):
+    schemes_config = parse_config()['schemes']
+
+    all_schemes = meta['cc_schemes']
+    if schemes is None:
+        cc_schemes = all_schemes
+    else:
+        cc_schemes = schemes.split()
+
+    for cc in cc_schemes:
+        if cc not in all_schemes:
+            sys.exit('%s is not a scheme included in '
+                     'pantheon_metadata.json' % cc)
+        if cc not in schemes_config:
+            sys.exit('%s is not a scheme included in src/config.yml' % cc)
+
+    return cc_schemes
+
+def get_sys_info():
+    sys_info = ''
+
+    # Check the system type
+    if platform.system() == 'Darwin':  # macOS
+        sys_info += subprocess.check_output(['uname', '-sr']).decode("utf-8")
+        sys_info += "macOS does not support 'net.core.default_qdisc'\n"
+    else:  # Linux
+        try:
+            sys_info += subprocess.check_output(['sysctl', 'net.core.default_qdisc']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.core.rmem_default']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.core.rmem_max']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.core.wmem_default']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.core.wmem_max']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.ipv4.tcp_rmem']).decode("utf-8")
+            sys_info += subprocess.check_output(['sysctl', 'net.ipv4.tcp_wmem']).decode("utf-8")
+        except subprocess.CalledProcessError as e:
+            print(f"Error running sysctl command: {e}")
+            sys_info += "Error: Unable to retrieve sysctl information\n"
+
+    return sys_info

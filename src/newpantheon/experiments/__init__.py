@@ -10,6 +10,8 @@ from newpantheon.experiments.test import run_test
 from newpantheon.experiments.setup import run_setup
 from newpantheon.experiments.test.helpers import utils
 
+from newpantheon import analysis
+
 def parse_test_shared(parser):
     parser.add_argument(
         "-f", "--flows", type=int, default=1, help="number of flows (default 1)"
@@ -187,6 +189,7 @@ def verify_test_args(args):
 
 
 def setup_args(subparsers, parser):
+    analysis.setup_args(subparsers)
     parser_experiment = subparsers.add_parser("experiment", help="Run experiment")
 
     # Define nested subcommands for 'experiment'
@@ -270,8 +273,10 @@ def setup_args(subparsers, parser):
     else:
         args.config_file = None
 
-    verify_test_args(args)
-    utils.make_sure_dir_exists(args.data_dir)
+    print(args)
+    if args.command == "experiment":
+        verify_test_args(args)
+        utils.make_sure_dir_exists(args.data_dir)
     return args
 
 

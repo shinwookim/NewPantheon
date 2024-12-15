@@ -103,7 +103,6 @@ def run(args):
         with open(file_path, 'r') as f:
             # Load the JSON data into a Python dictionary
             data = json.load(f)
-        print(context.src_dir)
         schemes_str = ast.literal_eval(data["cc_schemes"])
         args.schemes = " ".join(schemes_str)
         if "test-name" in data:

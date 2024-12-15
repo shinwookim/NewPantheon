@@ -16,18 +16,62 @@ This creates a new environment with all of the dependencies specified in the [py
 ```
 hatch shell dev
 ```
+Lastly, you may need to install NewPantheon in that environment by running:
+```
+pip install -e .
+```
+from the top-level directory of this repository.
+
+### Installing Mahimahi
+
+To run tests locally, you'll need a network emulator; currently, Mahimahi is supported.
+
+You can find instructions on downloading and installing Mahimahi on [their website](http://mahimahi.mit.edu/).
+
+After installing Mahimahi, you should be able to run `mm-delay 50 mm-loss uplink 0.2` from the terminal to spawn a Mahimahi shell.
+
 ## Experiments
 
-[To be filled in]
+To run the experiments, you can run
+```sh
+python src/newpantheon/__main__.py experiment test local --scheme <scheme>
+```
+where `<scheme>` is a CC scheme with a corresponding wrapper in `src/newpantheon/wrappers`.
+
+Alternatively, you can replace `--scheme <scheme>` with `--all` to run all supported CC algorithms in sequence.
+
+### Testing CC Scheme Interactions (New)
+
+To test interactions between different CC schemes, you need run NewPantheon in *configuration* mode, where you pass a pre-defined *configuration* file.
+
+A configuration file is a YAML file with the following format:
+```yaml
+test-name: test
+flows:
+  - scheme: cubic
+  - scheme: vegas
+```
+
+With this file you can run:
+```sh
+python src/newpantheon/__main__.py experiment test -c test_config.yml local --all --data-dir output_dir
+```
+
+Note: you must specify a output directory in this case.
 
 ## Analysis
 
 To run analysis, use the following command:
-```
+```sh
 python src/newpantheon/__main__.py analysis --data-dir DIR
 ```
 
-(--data-dir is optional, the default is src/tmp)
+`--data-dir` is optional, the default is `src/tmp`
+
+If you want to run analysis for interacting schemes, you can use the `--interactions` flag, as shown below.
+```sh
+python src/newpantheon/__main__.py analysis --data-dir DIR --interactions
+```
 
 ## Acknowledgements
 

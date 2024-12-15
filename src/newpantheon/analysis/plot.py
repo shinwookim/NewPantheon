@@ -242,9 +242,16 @@ class Plot(object):
                 continue
             
             if self.interactions:
-                cc_name = self.cc_schemes
-                color = 'blue'
-                marker = '*'
+                if cc == self.cc_schemes[0]:
+                    cc_name = self.cc_schemes[0]
+                    color = '#cb736e'
+                    marker = '+'
+                else:
+                    num_flow = int(cc) - 1
+                    cc = self.individual_schemes[num_flow]
+                    cc_name = schemes_config[cc]['name']
+                    color = schemes_config[cc]['color']
+                    marker = schemes_config[cc]['marker']
             else:
                 cc_name = schemes_config[cc]['name']
                 color = schemes_config[cc]['color']
@@ -315,25 +322,47 @@ class Plot(object):
 
         data_for_plot = {}
         data_for_json = {}
+        
+        if not self.interactions:
+            for cc in perf_data:
+                data_for_plot[cc] = []
+                data_for_json[cc] = {}
 
-        for cc in perf_data:
-            data_for_plot[cc] = []
-            data_for_json[cc] = {}
+                for run_id in perf_data[cc]:
+                    if perf_data[cc][run_id] is None:
+                        continue
 
-            for run_id in perf_data[cc]:
-                if perf_data[cc][run_id] is None:
-                    continue
+                    tput = perf_data[cc][run_id]['throughput']
+                    delay = perf_data[cc][run_id]['delay']
+                    if tput is None or delay is None:
+                        continue
+                    data_for_plot[cc].append((tput, delay))
 
-                tput = perf_data[cc][run_id]['throughput']
-                delay = perf_data[cc][run_id]['delay']
-                if tput is None or delay is None:
-                    continue
-                data_for_plot[cc].append((tput, delay))
+                    flow_data = perf_data[cc][run_id]['flow_data']
+                    if flow_data is not None:
+                        data_for_json[cc][run_id] = flow_data
+        else:
+            for cc in perf_data:
+                data_for_plot[cc] = []
+                data_for_json[cc] = {}
 
-                flow_data = perf_data[cc][run_id]['flow_data']
-                if flow_data is not None:
-                    data_for_json[cc][run_id] = flow_data
+                for run_id in perf_data[cc]:
+                    flow_data = perf_data[cc][run_id]['flow_data']
+                    if flow_data is not None:
+                        data_for_json[cc][run_id] = flow_data
 
+                        for key, val in flow_data.items():
+                            tput = val['tput']
+                            delay = val['delay']
+                            if key == 'all':
+                                data_for_plot[cc].append((tput, delay))
+                            else:
+                                if key not in data_for_plot:
+                                    data_for_plot[key] = [(tput, delay)]
+                                else:
+                                    data_for_plot[key].append((tput, delay))
+                        
+        # print(perf_data)
         # if not self.no_graphs:
         self.plot_throughput_delay(data_for_plot)
 

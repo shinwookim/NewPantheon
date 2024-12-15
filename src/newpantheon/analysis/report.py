@@ -237,7 +237,7 @@ class PDF(FPDF):
         self.summary_table()
 
         if path.isfile(raw_summary):
-            self.image(raw_summary, x=30, y=self.get_y(), h=137)  # Adjust width with padding
+            self.image(raw_summary, x=40, y=self.get_y(), h=137)  # Adjust width with padding
             self.ln(135)
         else:
             self.cell(0, 5, "Figure is missing", align="C")
@@ -322,7 +322,8 @@ class PDF(FPDF):
                             self.ln(5)
 
     def run(self):
-        pdf_path = path.join(self.data_dir, f"pantheon_report_{utils.utc_time()}.pdf")
+        time = str(utils.utc_time()).replace(" ", "_").replace("-", "_").replace(":", "_")
+        pdf_path = path.join(self.data_dir, f"pantheon_report_{time}.pdf")
         self.include_summary()
         self.output(pdf_path)
         

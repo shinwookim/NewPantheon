@@ -62,11 +62,16 @@ Note: you must specify a output directory in this case.
 ## Analysis
 
 To run analysis, use the following command:
-```
+```sh
 python src/newpantheon/__main__.py analysis --data-dir DIR
 ```
 
-(`--data-dir` is optional, the default is `src/tmp`)
+`--data-dir` is optional, the default is `src/tmp`
+
+If you want to run analysis for interacting schemes, you can use the `--interactions` flag, as shown below.
+```sh
+python src/newpantheon/__main__.py analysis --data-dir DIR --interactions
+```
 
 ## Acknowledgements
 
